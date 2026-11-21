@@ -551,9 +551,12 @@ function applyChar(r, name, modified) {
   const byHash = list => { const m = {}; list.forEach(x => { if (x.id) m[stableHash(x.id)] = x; }); return m; };
   const BL = byHash(blockers), FD = byHash(foods), AR = {}; Object.entries(DATA.armor).forEach(([id, v]) => AR[stableHash(id)] = v);
   const eq = r.items.filter(i => i.equipped), out = [];
-  const bl = eq.filter(i => BL[i.hash]).sort((a, b) => BL[b.hash].shield - BL[a.hash].shield)[0];
-  if (bl) { S.blocker = BL[bl.hash].label; S.quality = bl.quality; out.push(`<b>${S.blocker}</b> q${bl.quality}`); }
-  else out.push("no shield equipped in the save, kept <b>" + S.blocker + "</b>");
+  // equipped shield, else the strongest shield in the inventory, else an equipped weapon you'd block with
+  const bpOf = i => BL[i.hash].bp + Math.max(0, i.quality - 1) * BL[i.hash].bpLvl;
+  const shields = r.items.filter(i => BL[i.hash] && BL[i.hash].shield).sort((a, b) => b.equipped - a.equipped || bpOf(b) - bpOf(a));
+  const bl = shields[0] || eq.filter(i => BL[i.hash])[0];
+  if (bl) { S.blocker = BL[bl.hash].label; S.quality = bl.quality; out.push(`<b>${S.blocker}</b> q${bl.quality}${bl.equipped ? "" : " (from inventory)"}`); }
+  else out.push("no shield in the save, kept <b>" + S.blocker + "</b>");
   S.skill = Math.round((r.skills[6] || 0) * 10) / 10; out.push(`block skill <b>${S.skill}</b>`);
   const WP = byHash(weapons); S.wskills = r.skills;
   const wp = eq.filter(i => WP[i.hash])[0] || r.items.filter(i => WP[i.hash] && WP[i.hash].swings.some(s => s.stag > 1)).sort((a, b) => b.quality - a.quality)[0];
