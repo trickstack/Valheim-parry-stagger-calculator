@@ -134,9 +134,42 @@ for path, cl in by.items():
                 else "Health" if st < hp / 2 else "Stamina" if hp < st / 2 else "Balanced")
         foods.append({"id": it_name, "label": label, "hp": hp, "st": st, "eitr": ei, "burn": s["m_foodBurnTime"], "kind": kind})
 
+# damage-taken modifiers: armor pieces (Player.ApplyArmorDamageMods), set bonuses, meads, forsaken powers (SEMan.ApplyDamageMods)
+SE = json.load(open(ROOT / "parry" / "se.json", encoding="utf-8"))
+mods_of = lambda lst: {str(m["m_type"]): m["m_modifier"] for m in lst if m["m_modifier"]}
+resists, seen = [], set()
+def add_res(key, **r):
+    if key not in seen and r["mods"]:
+        seen.add(key); resists.append(r)
+for path, cl in by.items():
+    it = cl.get("ItemDrop")
+    if not it or "/" in path or it_names[path].startswith(("FW_", "SP_")):
+        continue
+    s = it["m_itemData"]["m_shared"]
+    label = en(s["m_name"])
+    if not label or "UNUSED" in label:
+        continue
+    if s["m_itemType"] in (6, 7, 11, 17):
+        add_res(it_names[path], id=it_names[path], label=label, group="Armor", mods=mods_of(s["m_damageModifiers"]))
+        se = SE.get(s.get("m_setStatusEffect") or "")
+        if se:
+            add_res(s["m_setName"], id="set:" + s["m_setName"], label=en(se["name"]) + f" (set of {s['m_setSize']})", group="Set bonus",
+                    set=s["m_setName"], size=s["m_setSize"], mods=mods_of(se["mods"]))
+    se = SE.get(s.get("m_consumeStatusEffect") or "")
+    if se and "Base" not in it_names[path]:
+        add_res(se["obj"], id="se:" + se["obj"], label=label, group="Mead", mods=mods_of(se["mods"]))
+for se in SE.values():
+    if se["obj"].startswith("GP_") or se["obj"] == "Wet":
+        add_res(se["obj"], id="se:" + se["obj"], label=("Forsaken power: " if se["obj"].startswith("GP_") else "") + en(se["name"]),
+                group="Power" if se["obj"].startswith("GP_") else "Condition", mods=mods_of(se["mods"]))
+set_of = {it_names[p]: c["ItemDrop"]["m_itemData"]["m_shared"]["m_setName"] for p, c in by.items()
+          if c.get("ItemDrop") and c["ItemDrop"]["m_itemData"]["m_shared"].get("m_setName")}
+
 p = by["player"]["Character+Humanoid"]
 out = {"player": {k[2:]: p[k] for k in ("m_baseHP", "m_baseStamina", "m_staggerDamageFactor", "m_blockStaminaDrain")},
-       "biomes": list(BIOMES), "enemies": enemies, "armor": armor,
+       "biomes": list(BIOMES), "enemies": enemies, "armor": armor, "playerMods": mods_of([{"m_type": t, "m_modifier": p["m_damageModifiers"]["m_" + n]} for t, n in ((1, "blunt"), (2, "slash"), (4, "pierce"), (8, "chop"), (16, "pickaxe"), (32, "fire"), (64, "frost"), (128, "lightning"), (256, "poison"), (512, "spirit"))]),
+       "resists": sorted(resists, key=lambda r: (["Armor", "Set bonus", "Mead", "Power", "Condition"].index(r["group"]), r["label"])),
+       "setOf": {k: v for k, v in set_of.items() if any(r.get("set") == v for r in resists)},
        "weapons": sorted(weapons.values(), key=lambda w: (w["skillName"], sum(w["damage"].values()))),
        "blockers": sorted({b["label"]: b for b in blockers}.values(), key=lambda b: (not b["shield"], b["bp"])),
        "foods": sorted({f["label"]: f for f in foods}.values(), key=lambda f: -f["hp"])}

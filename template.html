@@ -95,6 +95,10 @@ tbody tr[aria-selected=true] td { background: color-mix(in srgb, var(--accent) 1
 .explain { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 80ch; }
 body[data-view=stagger] [data-v=parry], body:not([data-view=stagger]) [data-v=stagger] { display: none !important; }
 .viewsw { margin-bottom: 12px; }
+details.res summary { cursor: pointer; font-size: 13px; }
+details.res .grp { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 2px; }
+details.res label { display: flex; gap: 6px; align-items: baseline; font-size: 13px; padding: 1px 0; }
+details.res label small { color: var(--muted); }
 footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch; display: grid; gap: 6px; }
 </style>
 
@@ -152,6 +156,8 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
           <div class="field" style="flex:1" data-v="parry"><label for="armor">Armor</label><input id="armor" type="number" min="0" max="400" step="1"></div>
           <div class="field" style="flex:1"><label for="players">Players nearby</label><input id="players" type="number" min="1" max="10" step="1"></div>
         </div>
+        <details class="res" data-v="parry" style="margin-top:8px"><summary>Resistances: <span id="ressum"></span></summary><div id="reslist"></div>
+          <div class="note" style="margin-top:4px">They cut the damage that lands on you (after a broken guard, or from hits you can't block). They don't help the guard hold: the game checks that before your resistances.</div></details>
         <div class="field" style="margin-top:8px" data-v="parry"><label for="diff">Combat difficulty</label>
           <select id="diff"><option value="50">Very easy (50% enemy damage)</option><option value="75">Easy (75%)</option><option value="100">Normal (100%)</option><option value="150">Hard (150%)</option><option value="200">Very hard (200%)</option></select></div>
       </div>
@@ -188,7 +194,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
   </div>
   <footer>
     <div>Numbers come from the game files (build 2026-10-30): enemy weapon damage and attack multipliers, shield block power, food values, and the game's own block, stagger and armor formulas. Worst case is assumed: enemy damage roll at its maximum, your stagger bar empty, full health and stamina, all three foods at the same time left.</div>
-    <div>Not modelled: armor and mead resistances, set bonuses and other status effects, NG+ world levels, wet or cold debuffs. Fire and poison are shown as damage over time and don't count toward the one-shot check. Biomes marked "?" are a best guess for creatures that aren't in the normal spawn tables.</div>
+    <div>Resistances from armor, set bonuses, meads, forsaken powers and being wet are applied to the damage that lands on you. Not modelled: other status effects (some change parry bonus or stagger), NG+ world levels, wet or cold debuffs. Fire and poison are shown as damage over time and don't count toward the one-shot check. Biomes marked "?" are a best guess for creatures that aren't in the normal spawn tables.</div>
   </footer>
 </div>
 
@@ -234,7 +240,7 @@ for (const e of Object.values(DATA.enemies)) {
 
 const DEFAULTS = { blocker: "Banded Shield", quality: 1, skill: 25, mode: "parry", foods: ["Sausages", "Black Soup", "Turnip Stew"],
   armor: 46, players: 1, diff: 150, cg: 20, cr: 90, biome: "Black Forest", stars: 0, enemy: "troll",
-  view: "parry", wpn: "Iron Atgeir", wq: 2, wskill: 16, pdmg: 85, extra: 0, wskills: null };
+  res: [], view: "parry", wpn: "Iron Atgeir", wq: 2, wskill: 16, pdmg: 85, extra: 0, wskills: null };
 let S = { ...DEFAULTS };
 try { const saved = JSON.parse(localStorage.getItem("parrycheck") || "null"); if (saved) S = { ...DEFAULTS, ...saved }; } catch (e) {}
 const save = () => { try { localStorage.setItem("parrycheck", JSON.stringify(S)); } catch (e) {} };
@@ -246,6 +252,27 @@ function applyArmor(d, ac) {
   const tot = BLOCKABLE.reduce((s, k) => s + (o[k] || 0), 0); if (tot <= 0) return o;
   const r = armorFn(tot, ac) / tot; BLOCKABLE.forEach(k => { if (o[k]) o[k] *= r; }); return o;
 }
+// HitData.DamageModifiers.Apply / ShouldOverride: player base, then armor pieces, then status effects
+const RES = DATA.resists;
+const MODNAME = ["normal", "resistant ×0.5", "weak ×1.5", "immune", "ignored", "very resistant ×0.25", "very weak ×2", "slightly resistant ×0.75", "slightly weak ×1.25"];
+const RESIST = [1, 5, 7, 3], WEAKS = [2, 6, 8];
+function overrides(a, b) {
+  if (a === 4) return false; if (b === 3) return true;
+  if (a === 5 && b === 1) return false; if (a === 6 && b === 2) return false;
+  if ((a === 5 || a === 1) && b === 7) return false; if ((a === 6 || a === 2) && b === 8) return false;
+  if (RESIST.includes(a) && WEAKS.includes(b)) return false;
+  return true;
+}
+function resistMods() {
+  const m = {}; const apply = mods => Object.entries(mods).forEach(([bit, mod]) => { if (overrides(m[bit] || 0, mod)) m[bit] = mod; });
+  apply(DATA.playerMods);
+  const on = RES.filter(r => S.res.includes(r.id));
+  on.filter(r => r.group === "Armor").forEach(r => apply(r.mods));
+  on.filter(r => r.group !== "Armor").forEach(r => apply(r.mods));
+  return m;
+}
+function applyRes(d) { const m = resistMods(), o = { ...d }; for (const k of TYPES) if (o[k] && m[TYPEBIT[k]]) o[k] *= MODMULT[m[TYPEBIT[k]]]; return o; }
+const resSummary = () => { const m = resistMods(); return TYPES.filter(k => m[TYPEBIT[k]] && !PLAYER_IMMUNE.includes(k)).map(k => k + " " + MODNAME[m[TYPEBIT[k]]]).join(", ") || "none"; };
 const sum = (d, keys) => keys.reduce((s, k) => s + (d[k] || 0), 0);
 const foodFrac = t => Math.pow(Math.max(0, Math.min(1, t)), 0.3);
 const chosenFoods = () => S.foods.map(n => foods.find(f => f.label === n)).filter(Boolean);
@@ -265,7 +292,7 @@ function evalRow(row, t) {
   let raw = {}; TYPES.forEach(k => { if (row.dmg[k]) raw[k] = row.dmg[k] * f; });
   PLAYER_IMMUNE.forEach(k => delete raw[k]);
   const hp = maxHP(t), limit = hp * P.staggerDamageFactor;
-  const full = applyArmor(raw, S.armor);
+  const full = applyArmor(applyRes(raw), S.armor);
   const fullHit = sum(full, INSTANT), dot = sum(full, ["fire", "poison"]);
   if (row.unblock) return { raw, hp, limit, fullHit, dot, holds: false, stag: null, leftHit: fullHit };
   const { bp, parry, b } = blockPower();
@@ -276,9 +303,9 @@ function evalRow(row, t) {
   const stag = sum(left, STAGGER);
   const cost = parry ? 0 : P.blockStaminaDrain * Math.min(1, blocked / bp) * (1 + (b.staminaMod || 0));
   const holds = stag < limit && maxSt(t) > cost;
-  const after = applyArmor(holds ? left : d, S.armor);
+  const after = applyArmor(applyRes(holds ? left : d), S.armor);
   const hit = sum(after, INSTANT);
-  return { raw, hp, limit, fullHit: sum(applyArmor(d, S.armor), INSTANT), dot, holds: holds && hit < hp, stag, leftHit: hit, cost, staggerOnly: stag >= limit };
+  return { raw, hp, limit, fullHit: sum(applyArmor(applyRes(d), S.armor), INSTANT), dot, holds: holds && hit < hp, stag, leftHit: hit, cost, staggerOnly: stag >= limit };
 }
 // smallest food fraction where the block holds and you live; Infinity if never
 function need(row) {
@@ -365,6 +392,10 @@ function initControls() {
   $("wpn").addEventListener("change", e => { S.wpn = e.target.value; const w = weapon(); if (S.wskills && S.wskills[w.skill] != null) { S.wskill = Math.round(S.wskills[w.skill] * 10) / 10; $("wskill").value = S.wskill; } update(); });
   bind("wq", "wq", 1); bind("wskill", "wskill", 1); bind("pdmg", "pdmg", 1); bind("extra", "extra", 1);
   $("view").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.view; update(); };
+  const short = mods => Object.entries(mods).map(([bit, mod]) => `${TYPES.find(k => TYPEBIT[k] == bit)} ${MODNAME[mod].replace(/ ×.*/, "")}`).join(", ");
+  $("reslist").innerHTML = ["Armor", "Set bonus", "Mead", "Power", "Condition"].map(g => `<div class="grp">${g === "Armor" ? "Armor pieces" : g === "Power" ? "Forsaken powers" : g + "s"}</div>`
+    + RES.filter(r => r.group === g).map(r => `<label><input type="checkbox" value="${r.id}">${r.label} <small>${short(r.mods)}</small></label>`).join("")).join("");
+  $("reslist").addEventListener("change", e => { S.res = [...$("reslist").querySelectorAll("input:checked")].map(x => x.value); update(); });
   initLoader();
   $("cards").onclick = e => { const c = e.target.closest(".card"); if (!c) return; S.enemy = c.dataset.e; S.row = 0; update(); $("detail").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" }); };
 }
@@ -385,6 +416,8 @@ function update() {
   $("m-parry").setAttribute("aria-pressed", S.mode === "parry"); $("m-block").setAttribute("aria-pressed", S.mode !== "parry");
   $("m-parry").disabled = !(b.parry > 1); $("m-parry").title = b.parry > 1 ? "" : "This blocker has no parry bonus";
   [...$("stars").children].forEach(x => x.setAttribute("aria-pressed", +x.dataset.s === S.stars));
+  $("ressum").textContent = resSummary();
+  $("reslist").querySelectorAll("input").forEach(x => x.checked = S.res.includes(x.value));
   const { bp, parry } = blockPower();
   $("stats").innerHTML = `<span>Block power${parry ? " (parry)" : ""}</span><b>${bp.toFixed(1)}</b>
     <span>Max health, fresh food</span><b>${maxHP(1).toFixed(0)}</b><span>Guard limit, fresh food</span><b>${(maxHP(1) * P.staggerDamageFactor).toFixed(1)}</b>
@@ -494,7 +527,11 @@ function applyChar(r, name, modified) {
   if (wp) { S.wpn = WP[wp.hash].label; S.wq = wp.quality; }
   S.wskill = Math.round((r.skills[weapon().skill] || 0) * 10) / 10;
   out.push(`weapon <b>${S.wpn}</b> q${S.wq} (${weapon().skillName.toLowerCase()} ${S.wskill})`);
-  S.armor = eq.reduce((s, i) => s + (AR[i.hash] ? AR[i.hash][0] + Math.max(0, i.quality - 1) * AR[i.hash][1] : 0), 0); out.push(`armor <b>${S.armor}</b>`);
+  const RS = byHash(RES.filter(r => r.group === "Armor")), sets = {};
+  eq.forEach(i => { const id = Object.keys(DATA.setOf).find(k => stableHash(k) === i.hash); if (id) sets[DATA.setOf[id]] = (sets[DATA.setOf[id]] || 0) + 1; });
+  S.res = S.res.filter(id => { const r = RES.find(x => x.id === id); return r && r.group !== "Armor" && r.group !== "Set bonus"; })
+    .concat(eq.filter(i => RS[i.hash]).map(i => RS[i.hash].id), RES.filter(r => r.set && sets[r.set] >= r.size).map(r => r.id));
+  S.armor = eq.reduce((s, i) => s + (AR[i.hash] ? AR[i.hash][0] + Math.max(0, i.quality - 1) * AR[i.hash][1] : 0), 0); out.push(`armor <b>${S.armor}</b>` + (resSummary() !== "none" ? ` (${resSummary()})` : ""));
   const fs = r.foods.map(f => ({ f: FD[stableHash(f.name)], time: f.time })).filter(x => x.f);
   S.foods = [0, 1, 2].map(i => fs[i] ? fs[i].f.label : "");
   if (fs.length) {

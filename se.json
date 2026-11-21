@@ -1,0 +1,713 @@
+{
+"@-9187556816796760607": {
+"name": "$se_resting_name",
+"obj": "Resting",
+"tooltip": "$se_resting_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-8549459761421742959": {
+"name": "$se_trinketironstamina",
+"obj": "TrinketIronStamina",
+"tooltip": "$se_trinketironstamina_description",
+"mods": [],
+"stagger": 0.0
+},
+"@-8087536033046257248": {
+"name": "GD Heal",
+"obj": "SE_Greydwarf_shaman_frozen_heal",
+"tooltip": "",
+"mods": [],
+"stagger": 0.0
+},
+"@-7889610008100256970": {
+"name": "$se_yagluth_name",
+"obj": "GP_Yagluth",
+"tooltip": "$se_yagluth_tooltip",
+"mods": [
+{
+"m_type": 128,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@-7511904604093596066": {
+"name": "$se_theelder_name",
+"obj": "GP_TheElder",
+"tooltip": "$se_theelder_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-7475811727062878160": {
+"name": "$dvergr_buff",
+"obj": "SE_Dvergr_buff",
+"tooltip": "$dvergr_buff_description",
+"mods": [],
+"stagger": 0.0
+},
+"@-7141963885569646665": {
+"name": "$se_frostres_name",
+"obj": "SetEffect_WolfArmor",
+"tooltip": "$se_frostres_tooltip",
+"mods": [
+{
+"m_type": 64,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@-7078724345255023965": {
+"name": "$se_windrun_name",
+"obj": "WindRun",
+"tooltip": "$se_windrun_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-6461656628000561687": {
+"name": "$item_mead_bugrepellent",
+"obj": "Potion_BugRepellent",
+"tooltip": "$se_potion_bugrepellent_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-6458131572313452125": {
+"name": "$item_mead_strength",
+"obj": "Potion_strength",
+"tooltip": "$se_potion_strength_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-6397646614965962764": {
+"name": "$se_fader_name",
+"obj": "GP_Fader",
+"tooltip": "$se_fader_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 1
+}
+],
+"stagger": -0.5
+},
+"@-5986789425949394570": {
+"name": "$se_trinketblackdamagedealth",
+"obj": "TrinketBlackDamageHealth",
+"tooltip": "$se_trinketblackdamagedealth_description",
+"mods": [],
+"stagger": 0.0
+},
+"@-5806951048243835544": {
+"name": "$item_mead_hp_major",
+"obj": "Potion_health_major",
+"tooltip": "$se_potion_healthmajor_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-5779028409101215256": {
+"name": "$se_trinketchitinswim",
+"obj": "TrinketChitinSwim",
+"tooltip": "$se_trinketchitinswim_description",
+"mods": [],
+"stagger": 0.0
+},
+"@-5725904910855133456": {
+"name": "$se_immobilized",
+"obj": "ImmobilizedLong",
+"tooltip": "$se_immobilized_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-5562365813518780968": {
+"name": "$se_trollseteffect_name",
+"obj": "SetEffect_TrollArmor",
+"tooltip": "$se_trollseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-5556831848546753244": {
+"name": "GD Heal",
+"obj": "SE_Greydwarf_shaman_heal",
+"tooltip": "",
+"mods": [],
+"stagger": 0.0
+},
+"@-5340393407104272354": {
+"name": "$item_mead_hp_minor",
+"obj": "Potion_health_minor",
+"tooltip": "$se_potion_healthminor_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-4653818767021755876": {
+"name": "$se_moder_name",
+"obj": "GP_Moder",
+"tooltip": "$se_moder_tooltip\n",
+"mods": [
+{
+"m_type": 64,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@-4493888396674314859": {
+"name": "$se_trinketbronzehealth",
+"obj": "TrinketBronzeHealth",
+"tooltip": "$se_trinketbronzehealth_description",
+"mods": [],
+"stagger": 0.0
+},
+"@-4146664275181460920": {
+"name": "$se_adrenalinerush 1",
+"obj": "AdrenalineRush",
+"tooltip": "$se_adrenalinerush_tooltip\n",
+"mods": [],
+"stagger": 0.0
+},
+"@-4056787116497734695": {
+"name": "$se_rootseteffect_name",
+"obj": "SetEffect_RootArmor",
+"tooltip": "$se_rootseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-3757133801542365027": {
+"name": "$se_freezing_name",
+"obj": "Freezing",
+"tooltip": "$se_freezing_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@-2815881847192473878": {
+"name": "$se_trinketsilverresist",
+"obj": "TrinketSilverResist",
+"tooltip": "$se_trinketsilverresist_description",
+"mods": [
+{
+"m_type": 1,
+"m_modifier": 7
+},
+{
+"m_type": 2,
+"m_modifier": 7
+},
+{
+"m_type": 4,
+"m_modifier": 7
+}
+],
+"stagger": 0.0
+},
+"@-2474482970527315182": {
+"name": "$se_slimed_name",
+"obj": "Slimed",
+"tooltip": "",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 6
+}
+],
+"stagger": 0.0
+},
+"@-2443468703539584250": {
+"name": "$item_mead_eitr_lingering",
+"obj": "Potion_eitr_lingering",
+"tooltip": "$se_potion_eitrlingering_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-2181038141873422355": {
+"name": "$se_mageseteffect_name",
+"obj": "SetEffect_MageArmor",
+"tooltip": "$se_mageseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-2156513573564269968": {
+"name": "$item_mead_hp_medium",
+"obj": "Potion_health_medium",
+"tooltip": "$se_potion_healthmedium_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-1847947334871852604": {
+"name": "$se_tared_name",
+"obj": "Tared",
+"tooltip": "$se_tared_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 6
+}
+],
+"stagger": 0.0
+},
+"@-1836966711493874134": {
+"name": "$item_mead_trollpheromones",
+"obj": "Potion_TrollPheromones",
+"tooltip": "$se_potion_trollpheromones_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-1447049969188737457": {
+"name": "$item_mead_eitr_minor",
+"obj": "Potion_eitr_minor",
+"tooltip": "$se_potion_eitrminor_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-1258831826370912803": {
+"name": "$item_mead_stamina_medium",
+"obj": "Potion_stamina_medium",
+"tooltip": "$se_potion_staminamedium_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-938321277629128372": {
+"name": "$se_slowfall_name",
+"obj": "SlowFall",
+"tooltip": "$se_slowfall_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-197602132423262145": {
+"name": "$item_mead_lightfoot",
+"obj": "Potion_LightFoot",
+"tooltip": "$se_potion_lightfoot_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@-183074157937319182": {
+"name": "$se_warm_name",
+"obj": "Warm",
+"tooltip": "$se_warm_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@542757715359267447": {
+"name": "$se_adrenalinerush 3",
+"obj": "AdrenalineRush3",
+"tooltip": "$se_adrenalinerush_tooltip\n",
+"mods": [],
+"stagger": 0.0
+},
+"@559719918280267348": {
+"name": "$item_mead_hp_lingering",
+"obj": "Potion_health_lingering",
+"tooltip": "$se_potion_healthlingering_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@698695168553250321": {
+"name": "$se_loxseteffect_name",
+"obj": "SetEffect_LoxArmor",
+"tooltip": "$se_loxseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@734153129821763572": {
+"name": "$se_deepnorthmediumarmorseteffect_name",
+"obj": "SetEffect_DeepNorthMediumArmor",
+"tooltip": "$se_deepnorthmediumarmorseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@1012660615521584095": {
+"name": "$se_corpserun_name",
+"obj": "CorpseRun",
+"tooltip": "$se_corpserun_tooltip",
+"mods": [
+{
+"m_type": 1,
+"m_modifier": 1
+},
+{
+"m_type": 2,
+"m_modifier": 1
+},
+{
+"m_type": 4,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@1154428643481511620": {
+"name": "$se_trinketblackdtamina",
+"obj": "TrinketBlackStamina",
+"tooltip": "$se_trinketblackdtamina_description",
+"mods": [],
+"stagger": 0.0
+},
+"@1432252578807285928": {
+"name": "$se_rested_name",
+"obj": "Rested",
+"tooltip": "$se_rested_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@1585917199844526014": {
+"name": "$item_mead_tamer",
+"obj": "Potion_tamer",
+"tooltip": "$se_potion_tamer_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@1759169112086210482": {
+"name": "$se_trinketflametaleitr",
+"obj": "TrinketFlametalEitr",
+"tooltip": "$se_trinketflametaleitr_description",
+"mods": [],
+"stagger": 0.0
+},
+"@1923870751486105801": {
+"name": "$se_puke_name",
+"obj": "Puke",
+"tooltip": "$se_puke_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@2138174813965708467": {
+"name": "$item_mead_tasty",
+"obj": "Potion_tasty",
+"tooltip": "$se_potion_tasty_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@2300717247302216727": {
+"name": "$se_fenringseteffect_name",
+"obj": "SetEffect_FenringArmor",
+"tooltip": "$se_fenringseteffect_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@2340665140797639395": {
+"name": "$se_wet_name",
+"obj": "Wet",
+"tooltip": "$se_wet_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 1
+},
+{
+"m_type": 64,
+"m_modifier": 2
+},
+{
+"m_type": 128,
+"m_modifier": 2
+}
+],
+"stagger": 0.0
+},
+"@2698801327343558390": {
+"name": "$item_mead_stamina_minor",
+"obj": "Potion_stamina_minor",
+"tooltip": "$se_potion_staminaminor_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@2936219518480111627": {
+"name": "$se_cold_name",
+"obj": "Cold",
+"tooltip": "$se_cold_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@3699216012959577986": {
+"name": "$se_eikthyr_name",
+"obj": "GP_Eikthyr",
+"tooltip": "$se_eikthyr_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@4227353779582658509": {
+"name": "$se_trinketironhealth",
+"obj": "TrinketIronHealth",
+"tooltip": "$se_trinketironhealth_description",
+"mods": [],
+"stagger": 0.0
+},
+"@4645466261565504474": {
+"name": "$se_immobilized",
+"obj": "Immobilized",
+"tooltip": "$se_immobilized_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@4652153093859421499": {
+"name": "$item_mead_poisonres",
+"obj": "Potion_poisonresist",
+"tooltip": "$se_potion_poisonresist_tooltip",
+"mods": [
+{
+"m_type": 256,
+"m_modifier": 5
+}
+],
+"stagger": 0.0
+},
+"@4654472913028976595": {
+"name": "$item_beltstrength",
+"obj": "BeltStrength",
+"tooltip": "$se_beltstrength_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@4827606849507544447": {
+"name": "$se_queen_name",
+"obj": "GP_Queen",
+"tooltip": "$se_queen_tooltip",
+"mods": [
+{
+"m_type": 256,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@4883523069920055876": {
+"name": "$item_mead_hasty",
+"obj": "Potion_hasty",
+"tooltip": "$se_potion_hasty_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@5177909709891622533": {
+"name": "$se_harvesterseteffect_name",
+"obj": "SetEffect_HarvesterArmor",
+"tooltip": "$se_harvesterseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@5251559842807906708": {
+"name": "$item_mead_stamina_lingering",
+"obj": "Potion_stamina_lingering",
+"tooltip": "$se_potion_staminalingering_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@5302165163142554024": {
+"name": "$se_bonemass_name",
+"obj": "GP_Bonemass",
+"tooltip": "$se_bonemass_tooltip",
+"mods": [
+{
+"m_type": 1,
+"m_modifier": 7
+},
+{
+"m_type": 2,
+"m_modifier": 7
+},
+{
+"m_type": 4,
+"m_modifier": 7
+}
+],
+"stagger": 0.0
+},
+"@5360646045852238720": {
+"name": "$item_mead_bzerker",
+"obj": "Potion_bzerker",
+"tooltip": "$se_potion_bzerker_tooltip",
+"mods": [
+{
+"m_type": 2,
+"m_modifier": 2
+},
+{
+"m_type": 1,
+"m_modifier": 2
+},
+{
+"m_type": 4,
+"m_modifier": 2
+}
+],
+"stagger": 0.0
+},
+"@5472033532368439640": {
+"name": "$se_adrenalinerush 2",
+"obj": "AdrenalineRush2",
+"tooltip": "$se_adrenalinerush_tooltip\n",
+"mods": [],
+"stagger": 0.0
+},
+"@5556790260526045729": {
+"name": "$se_trinketsilverdamage",
+"obj": "TrinketSilverDamage",
+"tooltip": "$se_trinketsilverdamage_description",
+"mods": [],
+"stagger": 0.0
+},
+"@5569902947473659028": {
+"name": "$item_helmet_fishinghat",
+"obj": "SetEffect_FishingHat",
+"tooltip": "$se_fishinghat_description",
+"mods": [],
+"stagger": 0.0
+},
+"@5944787351540583861": {
+"name": "$se_adrenalinerush 4",
+"obj": "AdrenalineRush4",
+"tooltip": "$se_adrenalinerush_tooltip\n",
+"mods": [],
+"stagger": 0.0
+},
+"@5989255271709347557": {
+"name": "$se_trinketbloodgoldstamina",
+"obj": "TrinketBloodGoldStamina",
+"tooltip": "$se_trinketbloodgoldstamina_description",
+"mods": [],
+"stagger": 0.0
+},
+"@6220902513298629056": {
+"name": "GrapplingHook",
+"obj": "GrapplingHook",
+"tooltip": "",
+"mods": [],
+"stagger": 0.0
+},
+"@6251836076416058771": {
+"name": "$se_berserkereffect_name",
+"obj": "SetEffect_BerserkerArmor",
+"tooltip": "$se_berserkerteffect_tooltip",
+"mods": [
+{
+"m_type": 1,
+"m_modifier": 8
+},
+{
+"m_type": 2,
+"m_modifier": 8
+},
+{
+"m_type": 4,
+"m_modifier": 8
+}
+],
+"stagger": 0.0
+},
+"@6581915520075920448": {
+"name": "$se_ashlandsmediumarmorseteffect_name",
+"obj": "SetEffect_AshlandsMediumArmor",
+"tooltip": "$se_ashlandsmediumarmorseteffect_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@6600963333949194748": {
+"name": "$item_barleywine",
+"obj": "Potion_barleywine",
+"tooltip": "$se_potion_barleywine_tooltip",
+"mods": [
+{
+"m_type": 32,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@6944855524464618242": {
+"name": "$item_mead_swimmer",
+"obj": "Potion_swimmer",
+"tooltip": "$se_potion_swimmer_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@7330693616566426523": {
+"name": "$se_berserker_undead_effect_name",
+"obj": "SetEffect_BerserkerUndeadArmor",
+"tooltip": "$se_berserker_undead_effect_tooltip",
+"mods": [
+{
+"m_type": 1,
+"m_modifier": 8
+},
+{
+"m_type": 2,
+"m_modifier": 8
+},
+{
+"m_type": 4,
+"m_modifier": 8
+}
+],
+"stagger": 0.0
+},
+"@7506460090952685673": {
+"name": "$item_mead_frostres",
+"obj": "Potion_frostresist",
+"tooltip": "$se_potion_frostresist_tooltip",
+"mods": [
+{
+"m_type": 64,
+"m_modifier": 1
+}
+],
+"stagger": 0.0
+},
+"@7532104338039318777": {
+"name": "$se_trinketscalestaminadamage",
+"obj": "TrinketScaleStaminaDamage",
+"tooltip": "$se_trinketscalestaminadamage_description",
+"mods": [],
+"stagger": 0.0
+},
+"@7823763718015740740": {
+"name": "$se_trinketbronzestamina",
+"obj": "TrinketBronzeStamina",
+"tooltip": "$se_trinketbronzestamina_description",
+"mods": [],
+"stagger": 0.0
+},
+"@8531430596529373822": {
+"name": "$se_immobilized",
+"obj": "ImmobilizedAshlands",
+"tooltip": "$se_immobilized_tooltip",
+"mods": [],
+"stagger": 0.0
+},
+"@8548235634689531091": {
+"name": "$se_trinketflametalstaminahealth",
+"obj": "TrinketFlametalStaminaHealth",
+"tooltip": "$se_trinketflametalstaminahealth_description",
+"mods": [],
+"stagger": 0.0
+},
+"@8862505346010938505": {
+"name": "$se_trinketbloodgoldhealth",
+"obj": "TrinketBloodGoldHealth",
+"tooltip": "$se_trinketbloodgoldhealth_description",
+"mods": [],
+"stagger": 0.0
+},
+"@9076824817527667301": {
+"name": "$se_trinketcarapaceeitr",
+"obj": "TrinketCarapaceEitr",
+"tooltip": "$se_trinketcarapaceeitr_description",
+"mods": [],
+"stagger": 0.0
+},
+"@9168525590738674020": {
+"name": "Dvergr Heal",
+"obj": "SE_Dvergr_heal",
+"tooltip": "",
+"mods": [],
+"stagger": 0.0
+}
+}
