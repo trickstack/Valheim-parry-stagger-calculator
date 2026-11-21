@@ -132,7 +132,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
         <h2>Your weapon</h2>
         <div class="field"><label for="wpn">Weapon</label><div class="combo"><input id="wpn" role="combobox" aria-expanded="false" aria-controls="wpn-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Type to search"><span class="caret" aria-hidden="true">▼</span><ul id="wpn-list" role="listbox" hidden></ul></div></div>
         <div class="row" style="margin-top:8px">
-          <div class="field" style="flex:1"><label for="wq">Quality</label><select id="wq"></select></div>
+          <div class="field" style="flex:1"><label for="wq">Quality</label><input id="wq" type="number" min="1" step="1"></div>
           <div class="field" style="flex:1"><label for="wskill" id="wskilll">Weapon skill</label><input id="wskill" type="number" min="0" max="100" step="1"></div>
         </div>
         <div class="row" style="margin-top:8px">
@@ -147,7 +147,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
         <h2>Blocker</h2>
         <div class="field"><label for="blocker">Shield or weapon</label><div class="combo"><input id="blocker" role="combobox" aria-expanded="false" aria-controls="blocker-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Type to search"><span class="caret" aria-hidden="true">▼</span><ul id="blocker-list" role="listbox" hidden></ul></div></div>
         <div class="row" style="margin-top:8px">
-          <div class="field" style="flex:1"><label for="quality">Quality</label><select id="quality"></select></div>
+          <div class="field" style="flex:1"><label for="quality">Quality</label><input id="quality" type="number" min="1" step="1"></div>
           <div class="field" style="flex:1"><label for="skill">Block skill</label><input id="skill" type="number" min="0" max="100" step="1"></div>
         </div>
         <div class="row" style="margin-top:8px; justify-content:space-between">
@@ -433,7 +433,6 @@ function swingNotes(sw) {
 // ---- UI ----
 // the forge of potential upgrades past maxQ with no cap in code; damage/block keep scaling linearly per level
 const qOf = (it, q) => it.maxQ > 1 ? Math.max(1, q || 1) : 1;
-const qOpts = (it, q) => Array.from({ length: it.maxQ > 1 ? Math.max(it.maxQ + 6, q) : 1 }, (_, i) => [i + 1, i < it.maxQ ? String(i + 1) : i + 1 + " (forge)"]);
 function fillSelect(el, items, val) { el.innerHTML = items.map(([v, t]) => `<option value="${v}">${t}</option>`).join(""); el.value = val; }
 let fillFoods = () => {};
 // searchable dropdown: click opens the full grouped list, typing filters it, arrows + Enter or click picks.
@@ -504,11 +503,11 @@ function update() {
   document.body.dataset.view = S.view;
   [...$("view").children].forEach(x => x.setAttribute("aria-pressed", x.dataset.view === S.view));
   const w = weapon();
-  fillSelect($("wq"), qOpts(w, S.wq), qOf(w, S.wq));
+  S.wq = qOf(w, Math.round(S.wq)); $("wq").value = S.wq; $("wq").disabled = w.maxQ < 2;
   S.wskill = Math.max(0, Math.min(100, S.wskill || 0));
   $("wskilll").textContent = w.skillName + " skill";
   const b = blocker();
-  fillSelect($("quality"), qOpts(b, S.quality), qOf(b, S.quality));
+  S.quality = qOf(b, Math.round(S.quality)); $("quality").value = S.quality; $("quality").disabled = b.maxQ < 2;
   S.skill = Math.max(0, Math.min(100, S.skill || 0)); S.players = Math.max(1, Math.min(10, S.players || 1));
   if (S.cr < S.cg) S.cr = S.cg;
   $("cgv").textContent = S.cg + "%"; $("crv").textContent = S.cr + "%";
