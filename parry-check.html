@@ -42,7 +42,7 @@ aside.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
 .field label, .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > * { min-width: 0; }
-select, input[type=number], input[list] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+select, input[type=number], .combo input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -99,6 +99,16 @@ details.res summary { cursor: pointer; font-size: 13px; }
 details.res .grp { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 2px; }
 details.res label { display: flex; gap: 6px; align-items: baseline; font-size: 13px; padding: 1px 0; }
 details.res label small { color: var(--muted); }
+.combo { position: relative; }
+.combo input { padding-right: 26px; cursor: pointer; }
+.combo .caret { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); pointer-events: none; color: var(--muted); font-size: 11px; }
+.combo ul { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 2px); max-height: 340px; overflow: auto; margin: 0; padding: 4px 0; list-style: none;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 6px 20px rgb(0 0 0 / .25); }
+.combo li { padding: 4px 10px; font-size: 13px; }
+.combo li.grp { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; padding-top: 8px; }
+.combo li[role=option] { cursor: pointer; }
+.combo li[role=option] small { color: var(--muted); }
+.combo li[aria-selected=true] { background: color-mix(in srgb, var(--accent) 18%, transparent); }
 footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch; display: grid; gap: 6px; }
 </style>
 
@@ -145,10 +155,9 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
       </div>
       <div data-v="parry">
         <h2>Food</h2>
-        <datalist id="foodlist"></datalist>
-        <div class="field"><label for="f0">Slot 1</label><input id="f0" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
-        <div class="field" style="margin-top:6px"><label for="f1">Slot 2</label><input id="f1" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
-        <div class="field" style="margin-top:6px"><label for="f2">Slot 3</label><input id="f2" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
+        <div class="field"><label for="f0">Slot 1</label><div class="combo"><input id="f0" role="combobox" aria-expanded="false" aria-controls="f0-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="(empty)"><span class="caret" aria-hidden="true">▼</span><ul id="f0-list" role="listbox" hidden></ul></div></div>
+        <div class="field" style="margin-top:6px"><label for="f1">Slot 2</label><div class="combo"><input id="f1" role="combobox" aria-expanded="false" aria-controls="f1-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="(empty)"><span class="caret" aria-hidden="true">▼</span><ul id="f1-list" role="listbox" hidden></ul></div></div>
+        <div class="field" style="margin-top:6px"><label for="f2">Slot 3</label><div class="combo"><input id="f2" role="combobox" aria-expanded="false" aria-controls="f2-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="(empty)"><span class="caret" aria-hidden="true">▼</span><ul id="f2-list" role="listbox" hidden></ul></div></div>
       </div>
       <div>
         <h2>Body and world</h2>
@@ -428,9 +437,32 @@ function initControls() {
   $("blocker").value = S.blocker;
   const GROUPS = [["Health", "Health", f => f.hp], ["Stamina", "Stamina", f => f.st], ["Eitr", "Eitr", f => f.eitr], ["Balanced", "Balanced", f => f.hp + f.st], ["Feasts", "Feasts", f => f.hp + f.st]];
   const ftext = f => `${f.label} · ${f.hp} hp · ${f.st} st${f.eitr ? ` · ${f.eitr} eitr` : ""} · ${Math.round(f.burn / 60)} min`;
-  // native searchable list: type any part of a name; option label shows the stats
-  $("foodlist").innerHTML = GROUPS.flatMap(([kind, , key]) => foods.filter(f => f.kind === kind).sort((a, b) => key(b) - key(a)))
-    .map(f => `<option value="${f.label}" label="${f.kind} · ${ftext(f).split(" · ").slice(1).join(" · ")}"></option>`).join("");
+  // searchable dropdown: opens on click/focus with the full grouped list, typing filters it
+  const foodCombo = i => {
+    const inp = $("f" + i), ul = $("f" + i + "-list"); let opts = [], act = -1;
+    const mark = () => { opts.forEach((o, k) => o.setAttribute("aria-selected", k === act)); if (opts[act]) opts[act].scrollIntoView({ block: "nearest" }); };
+    const render = q => {
+      q = q.toLowerCase();
+      ul.innerHTML = `<li role="option" data-v="">(empty)</li>` + GROUPS.map(([kind, label, key]) => {
+        const fs = foods.filter(f => f.kind === kind && f.label.toLowerCase().includes(q)).sort((a, b) => key(b) - key(a));
+        return fs.length ? `<li class="grp" role="presentation">${label}</li>` + fs.map(f => `<li role="option" data-v="${f.label}">${f.label} <small>${ftext(f).split(" · ").slice(1).join(" · ")}</small></li>`).join("") : "";
+      }).join("");
+      opts = [...ul.querySelectorAll("[role=option]")];
+      act = q ? Math.min(1, opts.length - 1) : Math.max(0, opts.findIndex(o => o.dataset.v === (S.foods[i] || ""))); mark();
+    };
+    const open = () => { if (!ul.hidden) return; ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(""); inp.select(); };
+    const close = () => { ul.hidden = true; inp.setAttribute("aria-expanded", "false"); inp.value = S.foods[i] || ""; };
+    const pick = v => { S.foods[i] = v; S.now = null; close(); update(); };
+    inp.addEventListener("focus", open); inp.addEventListener("click", open); inp.addEventListener("blur", close);
+    inp.addEventListener("input", () => { ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(inp.value.trim()); });
+    inp.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); open(); act = Math.max(0, Math.min(opts.length - 1, act + (e.key === "ArrowDown" ? 1 : -1))); mark(); }
+      else if (e.key === "Enter" && !ul.hidden && opts[act]) { e.preventDefault(); pick(opts[act].dataset.v); }
+      else if (e.key === "Escape") close();
+    });
+    ul.addEventListener("mousedown", e => { const o = e.target.closest("[role=option]"); e.preventDefault(); if (o) pick(o.dataset.v); });
+  };
+  [0, 1, 2].forEach(foodCombo);
   fillFoods = () => [0, 1, 2].forEach(i => { $("f" + i).value = S.foods[i] || ""; });
   fillFoods();
   $("skill").value = S.skill; $("armor").value = S.armor; $("players").value = S.players; $("diff").value = String(S.diff);
@@ -443,10 +475,6 @@ function initControls() {
   const bind = (id, key, num) => $(id).addEventListener(id === "cg" || id === "cr" ? "input" : "change", e => { S[key] = num ? +e.target.value : e.target.value; update(); });
   bind("blocker", "blocker"); bind("quality", "quality", 1); bind("skill", "skill", 1); bind("armor", "armor", 1); bind("players", "players", 1);
   bind("diff", "diff", 1); bind("cg", "cg", 1); bind("cr", "cr", 1);
-  [0, 1, 2].forEach(i => $("f" + i).addEventListener("change", e => {
-    const v = e.target.value.trim(), f = foods.find(x => x.label.toLowerCase() === v.toLowerCase());
-    if (v && !f) { e.target.value = S.foods[i] || ""; return; }
-    S.foods[i] = f ? f.label : ""; e.target.value = S.foods[i]; S.now = null; update(); }));
   const groups = [...new Set(weapons.map(w => w.skillName))];
   $("wpn").innerHTML = groups.map(g => `<optgroup label="${g}">${weapons.filter(w => w.skillName === g).map(w => `<option value="${w.label}">${w.label} (${Object.entries(w.damage).filter(([k]) => STAGGER.includes(k)).map(([k, v]) => v + " " + k).join(", ")}${w.swings.some(s => s.stag > 1) ? ", stagger ×" + Math.max(...w.swings.map(s => s.stag)) : ""})</option>`).join("")}</optgroup>`).join("");
   $("wpn").value = S.wpn; $("wskill").value = S.wskill; $("pdmg").value = String(S.pdmg); $("extra").value = String(S.extra);
