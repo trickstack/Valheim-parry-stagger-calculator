@@ -42,7 +42,8 @@ aside.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
 .field label, .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > * { min-width: 0; }
-.row > .field { align-self: stretch; grid-template-rows: 1fr auto; } /* controls line up when a label wraps */
+.row > .field { align-self: stretch; grid-template-rows: 1fr auto; }
+.row > .field > label { align-self: end; } /* controls line up when a label wraps */
 select, input[type=number], .combo input { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
