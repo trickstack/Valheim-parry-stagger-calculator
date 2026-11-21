@@ -1,0 +1,244 @@
+{
+"seeker": [
+31,
+512
+],
+"dverger": [
+512
+],
+"gjall": [
+512
+],
+"hare": [
+512
+],
+"seekerbrute": [
+512
+],
+"seekerbrood": [
+512
+],
+"tick": [
+512
+],
+"deer": [
+9
+],
+"boar": [
+1
+],
+"neck": [
+1
+],
+"seagal": [
+281
+],
+"fish1": [
+25
+],
+"fish2": [
+25
+],
+"fish3": [
+256
+],
+"fish5": [
+8
+],
+"fish6": [
+2
+],
+"fish7": [
+16
+],
+"fish8": [
+256
+],
+"fish9": [
+512
+],
+"fish12": [
+768
+],
+"fish10": [
+64
+],
+"fish11": [
+32
+],
+"greydwarf": [
+1,
+8
+],
+"bjorn": [
+8
+],
+"greydwarf_elite": [
+1,
+8
+],
+"fenring": [
+4
+],
+"greydwarf_shaman": [
+1,
+8
+],
+"skeleton": [
+31
+],
+"draugr": [
+2,
+29
+],
+"goblin": [
+13,
+16
+],
+"greyling": [
+1
+],
+"odin": [
+27
+],
+"troll": [
+8
+],
+"unbjorn": [
+16
+],
+"skeleton_swamps": [
+2
+],
+"draugr_elite": [
+2
+],
+"blob": [
+2
+],
+"leech": [
+2
+],
+"blobelite": [
+2
+],
+"goblinbrute": [
+16
+],
+"lox": [
+16
+],
+"deathsquito": [
+16
+],
+"wraith": [
+2
+],
+"stonegolem": [
+4
+],
+"hatchling": [
+4
+],
+"wolf": [
+4
+],
+"fireflies": [
+8
+],
+"serpent": [
+256
+],
+"abomination": [
+2
+],
+"writhan": [
+2
+],
+"cindersky": [
+32
+],
+"cinderstorm": [
+32
+],
+"bonemawserpent": [
+32
+],
+"fallenvalkyrie": [
+32
+],
+"morgen_nonsleeping": [
+32
+],
+"asksvin": [
+32
+],
+"volture": [
+32
+],
+"charred_twitcher": [
+32
+],
+"charred_archer": [
+31,
+32
+],
+"charred_melee": [
+31,
+32
+],
+"bloblava": [
+32
+],
+"lavarock": [
+32
+],
+"dvergerashlands": [
+32
+],
+"seal": [
+64
+],
+"shadowperson": [
+64
+],
+"greydwarf_frozen": [
+64
+],
+"greydwarf_shaman_frozen": [
+64
+],
+"skeleton_deepnorth": [
+64
+],
+"seal_pup": [
+64
+],
+"elaking": [
+-1,
+64
+],
+"elakinglantern": [
+64
+],
+"jotunwarrior": [
+-1,
+64
+],
+"jotunwitch": [
+-1,
+64
+],
+"spawner_trollfrost": [
+64
+],
+"barka": [
+64
+],
+"moose": [
+64
+],
+"projectile_fimbulvintermeteor": [
+-1
+]
+}

@@ -1,0 +1,542 @@
+<meta charset="utf-8">
+<title>Parry Check</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: loadout rail on the left, biome board + attack detail on the right; stacks on phones. */
+:root {
+  --bg: #eef0f2; --panel: #ffffff; --ink: #1b2129; --muted: #5d6874; --line: #d5dae0;
+  --accent: #8a5a1c; --accent-ink: #ffffff;
+  --ok: #1f8a4c; --ok-bg: #dff3e6; --warn: #c06a00; --warn-bg: #fdecd2; --bad: #c42b2b; --bad-bg: #fadede;
+  --dodge: #6b6f86; --dodge-bg: #e6e7ee;
+  --curve: #2f5fa8; --curve2: #9aa6b4;
+  --display: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #12161b; --panel: #1a2027; --ink: #e5e9ee; --muted: #93a0ad; --line: #2c343e;
+  --accent: #d69a4b; --accent-ink: #1a1206;
+  --ok: #4cc27c; --ok-bg: #173526; --warn: #f0a23a; --warn-bg: #3a2a12; --bad: #f06a6a; --bad-bg: #3d1a1c;
+  --dodge: #a3a7c2; --dodge-bg: #262838; --curve: #7aa7f0; --curve2: #5b6774; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #12161b; --panel: #1a2027; --ink: #e5e9ee; --muted: #93a0ad; --line: #2c343e;
+  --accent: #d69a4b; --accent-ink: #1a1206;
+  --ok: #4cc27c; --ok-bg: #173526; --warn: #f0a23a; --warn-bg: #3a2a12; --bad: #f06a6a; --bad-bg: #3d1a1c;
+  --dodge: #a3a7c2; --dodge-bg: #262838; --curve: #7aa7f0; --curve2: #5b6774; color-scheme: dark }
+
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 20px 48px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 16px; }
+h1 { font-family: var(--display); font-weight: 700; font-size: 34px; letter-spacing: .02em; margin: 0; text-transform: uppercase; }
+header p { margin: 0; color: var(--muted); max-width: 70ch; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+.grid { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 14px; }
+aside.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); display: grid; gap: 14px; }
+@media (max-width: 860px) { aside.panel { position: static; } }
+.field { display: grid; gap: 4px; }
+.field label, .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
+.row { display: flex; gap: 8px; align-items: center; }
+.row > * { min-width: 0; }
+select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { font: inherit; font-size: 13px; background: transparent; color: var(--ink); border: 0; padding: 6px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed=true] { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+button:focus-visible, select:focus-visible, input:focus-visible, .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; font-size: 13px; border-top: 1px solid var(--line); padding-top: 10px; }
+.stats b { font-family: var(--mono); font-weight: 600; }
+.note { font-size: 12px; color: var(--muted); }
+.btn { font: inherit; font-size: 13px; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.note code { font-size: 12px; background: var(--line); padding: 0 4px; border-radius: 3px; overflow-wrap: anywhere; }
+#fchstatus b { color: var(--ink); }
+.tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.tabs button { font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .03em; padding: 6px 12px; border-radius: 6px;
+  border: 1px solid var(--line); background: var(--panel); color: var(--ink); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+.tabs button[aria-selected=true] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.pips { display: inline-flex; gap: 2px; }
+.pip { width: 7px; height: 7px; border-radius: 50%; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 12px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.card { text-align: left; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line));
+  border-radius: 6px; padding: 9px 10px; cursor: pointer; display: grid; gap: 6px; }
+.card:hover { border-color: var(--c); }
+.card[aria-current=true] { box-shadow: 0 0 0 2px var(--c) inset; }
+.card .nm { font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
+.card .nm small { color: var(--muted); font-weight: 400; font-size: 11px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--cb); color: var(--c); font-weight: 600; white-space: nowrap; }
+.g { --c: var(--ok); --cb: var(--ok-bg); } .o { --c: var(--warn); --cb: var(--warn-bg); } .r { --c: var(--bad); --cb: var(--bad-bg); } .d { --c: var(--dodge); --cb: var(--dodge-bg); }
+#detail { margin-top: 16px; }
+.dhead { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 10px; }
+.dhead h3 { font-family: var(--display); font-size: 26px; margin: 0; font-weight: 700; letter-spacing: .02em; }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th { white-space: normal; vertical-align: bottom; font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .05em; }
+td.num, th.num { text-align: right; }
+tbody tr { cursor: pointer; }
+tbody tr[aria-selected=true] td { background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.verdict { font-weight: 600; color: var(--c); }
+.chart { margin-top: 14px; }
+.chart svg { width: 100%; height: auto; display: block; }
+.chart text { fill: var(--muted); font-family: var(--body); font-size: 11px; }
+.readout { font-size: 13px; margin-top: 6px; min-height: 1.4em; }
+.explain { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 80ch; }
+body[data-view=stagger] [data-v=parry], body:not([data-view=stagger]) [data-v=stagger] { display: none !important; }
+.viewsw { margin-bottom: 12px; }
+footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch; display: grid; gap: 6px; }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Parry Check</h1>
+    <p data-v="parry">Which hits your shield actually stops, at your loadout and difficulty. A parry breaks when the damage that gets past your shield is 40% of your max health or more, and max health drains as food runs out.</p>
+    <p data-v="stagger">Which enemies your weapon staggers, and in how many hits. An enemy staggers when the stagger damage it has taken reaches its stagger limit (max health × its stagger factor); the bar drains to zero over 5 seconds.</p>
+  </header>
+  <div class="grid">
+    <aside class="panel" aria-label="Loadout">
+      <div>
+        <h2>Your character</h2>
+        <div class="row" style="flex-wrap:wrap"><button id="loaddir" class="btn" type="button">Load newest save</button><button id="reloadfch" class="btn ghost" type="button" hidden>Reload</button><button id="loadfch" class="btn ghost" type="button">Pick one file</button></div>
+        <input id="fchfile" type="file" accept=".fch" hidden><input id="fchdir" type="file" webkitdirectory hidden>
+        <div class="note" id="fchstatus" style="margin-top:6px" aria-live="polite">Fills in your shield, block skill, armor and foods with their exact time left. In game press F5 and type <code>save</code>, then choose your characters folder and the most recently saved character is loaded. Steam cloud saves: <code>Steam\userdata\&lt;id&gt;\892970\remote\characters</code>. Local saves: <code>%USERPROFILE%\AppData\LocalLow\IronGate\Valheim\characters_local</code>. Files are read in your browser and never uploaded, even if your browser's prompt says "upload".</div>
+      </div>
+      <div data-v="stagger">
+        <h2>Your weapon</h2>
+        <div class="field"><label for="wpn">Weapon</label><select id="wpn"></select></div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label for="wq">Quality</label><select id="wq"></select></div>
+          <div class="field" style="flex:1"><label for="wskill" id="wskilll">Weapon skill</label><input id="wskill" type="number" min="0" max="100" step="1"></div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label for="pdmg">Your damage (world setting)</label>
+            <select id="pdmg"><option value="70">70%</option><option value="85">85% (Hard preset)</option><option value="100">100% (Normal)</option><option value="125">125%</option><option value="150">150%</option></select></div>
+          <div class="field" style="flex:1"><label for="extra">Also caught in the swing</label>
+            <select id="extra"><option value="0">Nothing</option><option value="1">Ground or 1 other</option><option value="2">2 other things</option><option value="3">3 other things</option></select></div>
+        </div>
+        <div class="note" style="margin-top:6px">Some swings split their damage when they hit several things at once, and the ground counts as one. With one extra thing each hit does 67%, with two 44%, with three 33%.</div>
+      </div>
+      <div data-v="parry">
+        <h2>Blocker</h2>
+        <div class="field"><label for="blocker">Shield or weapon</label><select id="blocker"></select></div>
+        <div class="row" style="margin-top:8px">
+          <div class="field" style="flex:1"><label for="quality">Quality</label><select id="quality"></select></div>
+          <div class="field" style="flex:1"><label for="skill">Block skill</label><input id="skill" type="number" min="0" max="100" step="1"></div>
+        </div>
+        <div class="row" style="margin-top:8px; justify-content:space-between">
+          <span class="lbl">Timing</span>
+          <span class="seg" role="group" aria-label="Block timing"><button id="m-parry" type="button">Parry</button><button id="m-block" type="button">Hold block</button></span>
+        </div>
+      </div>
+      <div data-v="parry">
+        <h2>Food</h2>
+        <div class="field" style="margin-bottom:6px"><label for="fsearch">Search food</label><input id="fsearch" type="search" placeholder="e.g. jerky, stew, honey" autocomplete="off"></div>
+        <div class="field"><label for="f0">Slot 1</label><select id="f0"></select></div>
+        <div class="field" style="margin-top:6px"><label for="f1">Slot 2</label><select id="f1"></select></div>
+        <div class="field" style="margin-top:6px"><label for="f2">Slot 3</label><select id="f2"></select></div>
+      </div>
+      <div>
+        <h2>Body and world</h2>
+        <div class="row">
+          <div class="field" style="flex:1" data-v="parry"><label for="armor">Armor</label><input id="armor" type="number" min="0" max="400" step="1"></div>
+          <div class="field" style="flex:1"><label for="players">Players nearby</label><input id="players" type="number" min="1" max="10" step="1"></div>
+        </div>
+        <div class="field" style="margin-top:8px" data-v="parry"><label for="diff">Combat difficulty</label>
+          <select id="diff"><option value="50">Very easy (50% enemy damage)</option><option value="75">Easy (75%)</option><option value="100">Normal (100%)</option><option value="150">Hard (150%)</option><option value="200">Very hard (200%)</option></select></div>
+      </div>
+      <div data-v="parry">
+        <h2>Colour cut-offs</h2>
+        <div class="field"><label for="cg">Green if it holds down to <span id="cgv" class="num"></span> food left</label><input id="cg" type="range" min="0" max="80" step="5"></div>
+        <div class="field" style="margin-top:6px"><label for="cr">Red if it needs more than <span id="crv" class="num"></span> food left</label><input id="cr" type="range" min="50" max="100" step="5"></div>
+      </div>
+      <div class="stats" id="stats" data-v="parry"></div>
+      <div class="note" id="exampleNote">Starts from an example Swamp-era loadout. Change anything; your choices are remembered in this browser.</div>
+    </aside>
+
+    <main>
+      <div class="viewsw"><span class="seg" role="group" aria-label="View" id="view"><button type="button" data-view="parry">Parry check</button><button type="button" data-view="stagger">Stagger check</button></span></div>
+      <div class="tabs" role="tablist" id="tabs"></div>
+      <div class="toolbar">
+        <span class="seg" role="group" aria-label="Enemy stars" id="stars"><button type="button" data-s="0">0 stars</button><button type="button" data-s="1">1 star</button><button type="button" data-s="2">2 stars</button></span>
+        <div class="legend" data-v="stagger">
+          <span><i class="sw" style="background:var(--ok)"></i>One hit always staggers</span>
+          <span><i class="sw" style="background:var(--warn)"></i>Sometimes in one hit</span>
+          <span><i class="sw" style="background:var(--bad)"></i>Needs several hits</span>
+          <span><i class="sw" style="background:var(--dodge)"></i>Can't be staggered</span>
+        </div>
+        <div class="legend" data-v="parry">
+          <span><i class="sw" style="background:var(--ok)"></i>Holds at low food</span>
+          <span><i class="sw" style="background:var(--warn)"></i>Holds only on fresh-ish food</span>
+          <span><i class="sw" style="background:var(--bad)"></i>Breaks, or needs near-full food</span>
+          <span><i class="sw" style="background:var(--dodge)"></i>Can't be blocked: dodge</span>
+        </div>
+      </div>
+      <div class="cards" id="cards"></div>
+      <section class="panel" id="detail" aria-live="polite"></section>
+    </main>
+  </div>
+  <footer>
+    <div>Numbers come from the game files (build 2026-10-30): enemy weapon damage and attack multipliers, shield block power, food values, and the game's own block, stagger and armor formulas. Worst case is assumed: enemy damage roll at its maximum, your stagger bar empty, full health and stamina, all three foods at the same time left.</div>
+    <div>Not modelled: armor and mead resistances, set bonuses and other status effects, NG+ world levels, wet or cold debuffs. Fire and poison are shown as damage over time and don't count toward the one-shot check. Biomes marked "?" are a best guess for creatures that aren't in the normal spawn tables.</div>
+  </footer>
+</div>
+
+<script>
+const DATA = /*DATA*/null;
+/*FCH*/
+const P = DATA.player;
+const TYPES = ["blunt","slash","pierce","chop","pickaxe","fire","frost","lightning","poison","spirit"];
+const BLOCKABLE = ["blunt","slash","pierce","fire","frost","lightning","poison","spirit"];
+const STAGGER = ["blunt","slash","pierce","lightning"];
+const INSTANT = ["blunt","slash","pierce","frost","lightning"];
+const PLAYER_IMMUNE = ["chop","pickaxe","spirit"];
+const TYPEBIT = {blunt:1,slash:2,pierce:4,chop:8,pickaxe:16,fire:32,frost:64,lightning:128,poison:256,spirit:512};
+const MODMULT = [1,0.5,1.5,0,0,0.25,2,0.75,1.25];
+const NAMES = { troll_log_swing_v: "Log slam (overhead)", troll_log_swing_h: "Log swipe (sideways)", troll_groundslam: "Two-fist slam",
+  troll_punch: "Punch", troll_throw: "Rock throw" };
+
+const blockers = DATA.blockers.filter(b => b.shield || b.bp >= 5);
+const foods = DATA.foods;
+const $ = id => document.getElementById(id);
+
+function pretty(w) {
+  if (NAMES[w]) return NAMES[w];
+  const parts = w.split("_"); if (parts.length > 1) parts.shift();
+  const s = parts.join(" ").replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase();
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Expand each enemy weapon into the hits that can land on you.
+for (const e of Object.values(DATA.enemies)) {
+  const seen = new Set(), rows = [];
+  for (const a of e.attacks) {
+    const key = a.weapon + "|" + a.anim; if (seen.has(key)) continue; seen.add(key);
+    const name = a.label && !/^\$/.test(a.label) && a.label.length > 2 && !/^(slap|bite|claw)$/i.test(a.label) ? a.label : pretty(a.weapon);
+    const hasDmg = Object.values(a.damage).some(v => v > 0);
+    const unblock = !a.blockable || a.staggerMult >= 100;
+    if (hasDmg) rows.push({ name, dmg: a.damage, mult: a.mult, stars: true, unblock, why: !a.blockable ? "unblockable" : a.staggerMult >= 100 ? "always staggers" : "", ranged: a.ranged });
+    if (hasDmg && a.chainLast > 1) rows.push({ name: name + " (combo finisher)", dmg: a.damage, mult: a.mult * a.chainLast, stars: true, unblock, why: rows.at(-1).why, ranged: a.ranged });
+    if (a.aoe) rows.push({ name: name + " (area blast)", dmg: a.aoe.damage, mult: 1, stars: false, unblock: !a.aoe.blockable, why: !a.aoe.blockable ? "unblockable" : "", ranged: false });
+  }
+  e.rows = rows;
+}
+
+const DEFAULTS = { blocker: "Banded Shield", quality: 1, skill: 25, mode: "parry", foods: ["Sausages", "Black Soup", "Turnip Stew"],
+  armor: 46, players: 1, diff: 150, cg: 20, cr: 90, biome: "Black Forest", stars: 0, enemy: "troll",
+  view: "parry", wpn: "Iron Atgeir", wq: 2, wskill: 16, pdmg: 85, extra: 0, wskills: null };
+let S = { ...DEFAULTS };
+try { const saved = JSON.parse(localStorage.getItem("parrycheck") || "null"); if (saved) S = { ...DEFAULTS, ...saved }; } catch (e) {}
+const save = () => { try { localStorage.setItem("parrycheck", JSON.stringify(S)); } catch (e) {} };
+
+// ---- game formulas (HitData.ApplyArmor, Humanoid.BlockAttack, Player.UpdateFood) ----
+const armorFn = (dmg, ac) => (ac < dmg / 2 ? dmg - ac : Math.min(1, dmg / (ac * 4)) * dmg);
+function applyArmor(d, ac) {
+  const o = { ...d }; if (ac <= 0) return o;
+  const tot = BLOCKABLE.reduce((s, k) => s + (o[k] || 0), 0); if (tot <= 0) return o;
+  const r = armorFn(tot, ac) / tot; BLOCKABLE.forEach(k => { if (o[k]) o[k] *= r; }); return o;
+}
+const sum = (d, keys) => keys.reduce((s, k) => s + (d[k] || 0), 0);
+const foodFrac = t => Math.pow(Math.max(0, Math.min(1, t)), 0.3);
+const chosenFoods = () => S.foods.map(n => foods.find(f => f.label === n)).filter(Boolean);
+const maxHP = t => P.baseHP + chosenFoods().reduce((s, f) => s + f.hp * foodFrac(t), 0);
+const maxSt = t => P.baseStamina + chosenFoods().reduce((s, f) => s + f.st * foodFrac(t), 0);
+function blocker() { return blockers.find(b => b.label === S.blocker) || blockers[0]; }
+function blockPower() {
+  const b = blocker(), q = Math.min(S.quality, b.maxQ);
+  const base = b.bp + Math.max(0, q - 1) * b.bpLvl;
+  const bp = base + base * (S.skill / 100) * 0.5;
+  const parry = S.mode === "parry" && b.parry > 1;
+  return { bp: parry ? bp * b.parry : bp, parry, b };
+}
+
+function evalRow(row, t) {
+  const f = (row.stars ? 1 + 0.5 * S.stars : 1) * row.mult * (S.diff / 100) * (1 + (S.players - 1) * 0.04);
+  let raw = {}; TYPES.forEach(k => { if (row.dmg[k]) raw[k] = row.dmg[k] * f; });
+  PLAYER_IMMUNE.forEach(k => delete raw[k]);
+  const hp = maxHP(t), limit = hp * P.staggerDamageFactor;
+  const full = applyArmor(raw, S.armor);
+  const fullHit = sum(full, INSTANT), dot = sum(full, ["fire", "poison"]);
+  if (row.unblock) return { raw, hp, limit, fullHit, dot, holds: false, stag: null, leftHit: fullHit };
+  const { bp, parry, b } = blockPower();
+  const d = { ...raw };
+  for (const [bit, mod] of Object.entries(b.mods || {})) for (const k of TYPES) if (TYPEBIT[k] & bit && d[k]) d[k] *= MODMULT[mod];
+  const left = applyArmor(d, bp);
+  const tot = sum(d, BLOCKABLE), blocked = tot - sum(left, BLOCKABLE);
+  const stag = sum(left, STAGGER);
+  const cost = parry ? 0 : P.blockStaminaDrain * Math.min(1, blocked / bp) * (1 + (b.staminaMod || 0));
+  const holds = stag < limit && maxSt(t) > cost;
+  const after = applyArmor(holds ? left : d, S.armor);
+  const hit = sum(after, INSTANT);
+  return { raw, hp, limit, fullHit: sum(applyArmor(d, S.armor), INSTANT), dot, holds: holds && hit < hp, stag, leftHit: hit, cost, staggerOnly: stag >= limit };
+}
+// smallest food fraction where the block holds and you live; Infinity if never
+function need(row) {
+  if (row.unblock) return Infinity;
+  if (!evalRow(row, 1).holds) return Infinity;
+  let lo = 0, hi = 1; if (evalRow(row, 0).holds) return 0;
+  for (let i = 0; i < 30; i++) { const m = (lo + hi) / 2; evalRow(row, m).holds ? hi = m : lo = m; }
+  return hi;
+}
+const cls = n => n === Infinity ? "r" : n <= S.cg / 100 ? "g" : n <= S.cr / 100 ? "o" : "r";
+const rowCls = r => r.unblock ? "d" : cls(need(r));
+const pct = x => Math.round(x * 100) + "%";
+const RANK = { g: 0, o: 1, r: 2 };
+function enemyCls(e) { return S.view === "stagger" ? stagEnemyCls(e) : parryEnemyCls(e); }
+function parryEnemyCls(e) { let w = null; for (const r of e.rows) { if (r.unblock) continue; const c = rowCls(r); if (w === null || RANK[c] > RANK[w]) w = c; } return w || "d"; }
+const verdict = (r, n) => r.unblock ? (r.why === "always staggers" ? "Always staggers you: dodge" : "Can't be blocked: dodge")
+  : n === Infinity ? "Breaks your guard even on full food" : n === 0 ? "Holds even on empty food" : "Holds from " + pct(n) + " food left";
+
+// ---- stagger (Attack.DoMeleeAttack, Skills.GetRandomSkillFactor, Character.ApplyDamage/AddStaggerDamage) ----
+const weapons = DATA.weapons;
+const weapon = () => weapons.find(w => w.label === S.wpn) || weapons[0];
+// random skill factor is uniform in [c-0.15, c+0.15] clamped to 0..1, c = lerp(0.4, 1, skill/100)
+function skillRange(skill) { const c = 0.4 + 0.6 * Math.max(0, Math.min(100, skill)) / 100; return [Math.max(0, c - 0.15), Math.min(1, c + 0.15)]; }
+function evalSwing(e, sw) {
+  const w = weapon(), q = Math.min(S.wq, w.maxQ);
+  const n = 1 + S.extra, split = sw.split && n > 1 ? 1 / (n * 0.75) : 1;
+  const scale = sw.mult * split * (S.pdmg / 100) / (1 + (S.players - 1) * 0.3);
+  const D = STAGGER.reduce((s, k) => s + ((w.damage[k] || 0) + Math.max(0, q - 1) * (w.perLvl[k] || 0)) * MODMULT[e.mods[k] || 0], 0) * scale;
+  const [lo, hi] = skillRange(S.wskill);
+  const thr = e.health * (S.stars + 1) * e.stagF;
+  if (e.stagF <= 0) return { D, lo, hi, thr, never: true, split };
+  const sMin = D * lo * sw.stag, sMax = D * hi * sw.stag;
+  const p = sMax <= 0 ? 0 : sMin >= thr ? 1 : hi === lo ? (sMax >= thr ? 1 : 0) : Math.max(0, Math.min(1, (sMax - thr) / (sMax - sMin)));
+  return { D, lo, hi, thr, sMin, sMax, p, hitsBest: sMax > 0 ? Math.max(1, Math.ceil(thr / sMax)) : Infinity, hitsWorst: sMin > 0 ? Math.max(1, Math.ceil(thr / sMin)) : Infinity, split };
+}
+const stagCls = r => r.never ? "d" : r.p >= 0.999 ? "g" : r.p > 0 ? "o" : "r";
+function stagEnemyCls(e) { const rs = weapon().swings.map(sw => evalSwing(e, sw)); if (rs[0].never) return "d"; const best = Math.max(...rs.map(r => r.p)); return best >= 0.999 ? "g" : best > 0 ? "o" : "r"; }
+const hitsText = r => r.hitsBest === Infinity ? "never" : r.hitsBest === r.hitsWorst ? String(r.hitsBest) : r.hitsBest + "–" + r.hitsWorst;
+function swingNotes(sw) {
+  const out = [];
+  if (sw.area) out.push("hits everything in a small sphere in front of you; the ground doesn't reduce it");
+  else {
+    if (sw.split) out.push("damage is shared when it hits several things, the ground included (÷1.5 with one extra)");
+    if (!sw.thru) out.push("stops at the first thing each ray touches, so ground or a rock in the way blocks it");
+    if (sw.angle >= 360 && sw.flat) out.push(`flat ${sw.range} m circle at ${(sw.height - sw.width).toFixed(1)}–${(sw.height + sw.width).toFixed(1)} m above your feet: on slopes it passes over enemies below you and under enemies above you, and misses them completely`);
+    else if (sw.vertical) out.push(`overhead arc, ${sw.range} m reach`);
+    else out.push(`${sw.angle}° arc, ${sw.range} m reach`);
+  }
+  return out.join("; ");
+}
+
+// ---- UI ----
+function fillSelect(el, items, val) { el.innerHTML = items.map(([v, t]) => `<option value="${v}">${t}</option>`).join(""); el.value = val; }
+let fillFoods = () => {};
+function initControls() {
+  const sh = blockers.filter(b => b.shield), wp = blockers.filter(b => !b.shield);
+  $("blocker").innerHTML = `<optgroup label="Shields">${sh.map(b => `<option value="${b.label}">${b.label} (block ${b.bp}${b.parry > 1 ? ", parry ×" + b.parry : ", can't parry"})</option>`).join("")}</optgroup>`
+    + `<optgroup label="Weapons">${wp.map(b => `<option value="${b.label}">${b.label} (block ${b.bp}${b.parry > 1 ? ", parry ×" + b.parry : ""})</option>`).join("")}</optgroup>`;
+  $("blocker").value = S.blocker;
+  const GROUPS = [["Health", "Health", f => f.hp], ["Stamina", "Stamina", f => f.st], ["Eitr", "Eitr", f => f.eitr], ["Balanced", "Balanced", f => f.hp + f.st], ["Feasts", "Feasts", f => f.hp + f.st]];
+  const ftext = f => `${f.label} · ${f.hp} hp · ${f.st} st${f.eitr ? ` · ${f.eitr} eitr` : ""} · ${Math.round(f.burn / 60)} min`;
+  // rebuild each food list from scratch (hiding <option>s is unreliable across browsers); the current pick always stays
+  const fhtml = (q, keep) => `<option value="">(empty)</option>` + GROUPS.map(([kind, label, key]) => {
+    const fs = foods.filter(f => f.kind === kind && (!q || f.label === keep || f.label.toLowerCase().includes(q))).sort((a, b) => key(b) - key(a));
+    return fs.length ? `<optgroup label="${label}">${fs.map(f => `<option value="${f.label}">${ftext(f)}</option>`).join("")}</optgroup>` : "";
+  }).join("");
+  fillFoods = q => [0, 1, 2].forEach(i => { const sel = $("f" + i); sel.innerHTML = fhtml(q, S.foods[i]); sel.value = S.foods[i] || ""; });
+  fillFoods("");
+  $("fsearch").addEventListener("input", e => fillFoods(e.target.value.trim().toLowerCase()));
+  $("skill").value = S.skill; $("armor").value = S.armor; $("players").value = S.players; $("diff").value = String(S.diff);
+  $("cg").value = S.cg; $("cr").value = S.cr;
+  $("tabs").innerHTML = DATA.biomes.map(b => `<button type="button" role="tab" data-b="${b}">${b}<span class="pips" data-pips="${b}"></span></button>`).join("");
+  $("tabs").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.biome = b.dataset.b; const first = Object.entries(DATA.enemies).find(([, x]) => x.biome === S.biome); S.enemy = first && first[0]; S.row = 0; update(); };
+  $("stars").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.stars = +b.dataset.s; update(); };
+  $("m-parry").onclick = () => { S.mode = "parry"; update(); };
+  $("m-block").onclick = () => { S.mode = "block"; update(); };
+  const bind = (id, key, num) => $(id).addEventListener(id === "cg" || id === "cr" ? "input" : "change", e => { S[key] = num ? +e.target.value : e.target.value; update(); });
+  bind("blocker", "blocker"); bind("quality", "quality", 1); bind("skill", "skill", 1); bind("armor", "armor", 1); bind("players", "players", 1);
+  bind("diff", "diff", 1); bind("cg", "cg", 1); bind("cr", "cr", 1);
+  [0, 1, 2].forEach(i => $("f" + i).addEventListener("change", e => { S.foods[i] = e.target.value; S.now = null; update(); }));
+  const groups = [...new Set(weapons.map(w => w.skillName))];
+  $("wpn").innerHTML = groups.map(g => `<optgroup label="${g}">${weapons.filter(w => w.skillName === g).map(w => `<option value="${w.label}">${w.label} (${Object.entries(w.damage).filter(([k]) => STAGGER.includes(k)).map(([k, v]) => v + " " + k).join(", ")}${w.swings.some(s => s.stag > 1) ? ", stagger ×" + Math.max(...w.swings.map(s => s.stag)) : ""})</option>`).join("")}</optgroup>`).join("");
+  $("wpn").value = S.wpn; $("wskill").value = S.wskill; $("pdmg").value = String(S.pdmg); $("extra").value = String(S.extra);
+  $("wpn").addEventListener("change", e => { S.wpn = e.target.value; const w = weapon(); if (S.wskills && S.wskills[w.skill] != null) { S.wskill = Math.round(S.wskills[w.skill] * 10) / 10; $("wskill").value = S.wskill; } update(); });
+  bind("wq", "wq", 1); bind("wskill", "wskill", 1); bind("pdmg", "pdmg", 1); bind("extra", "extra", 1);
+  $("view").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.view; update(); };
+  initLoader();
+  $("cards").onclick = e => { const c = e.target.closest(".card"); if (!c) return; S.enemy = c.dataset.e; S.row = 0; update(); $("detail").scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "nearest" }); };
+}
+
+function update() {
+  save();
+  document.body.dataset.view = S.view;
+  [...$("view").children].forEach(x => x.setAttribute("aria-pressed", x.dataset.view === S.view));
+  const w = weapon();
+  fillSelect($("wq"), Array.from({ length: w.maxQ }, (_, i) => [i + 1, String(i + 1)]), Math.min(S.wq, w.maxQ));
+  S.wskill = Math.max(0, Math.min(100, S.wskill || 0));
+  $("wskilll").textContent = w.skillName + " skill";
+  const b = blocker();
+  fillSelect($("quality"), Array.from({ length: b.maxQ }, (_, i) => [i + 1, String(i + 1)]), Math.min(S.quality, b.maxQ));
+  S.skill = Math.max(0, Math.min(100, S.skill || 0)); S.players = Math.max(1, Math.min(10, S.players || 1));
+  if (S.cr < S.cg) S.cr = S.cg;
+  $("cgv").textContent = S.cg + "%"; $("crv").textContent = S.cr + "%";
+  $("m-parry").setAttribute("aria-pressed", S.mode === "parry"); $("m-block").setAttribute("aria-pressed", S.mode !== "parry");
+  $("m-parry").disabled = !(b.parry > 1); $("m-parry").title = b.parry > 1 ? "" : "This blocker has no parry bonus";
+  [...$("stars").children].forEach(x => x.setAttribute("aria-pressed", +x.dataset.s === S.stars));
+  const { bp, parry } = blockPower();
+  $("stats").innerHTML = `<span>Block power${parry ? " (parry)" : ""}</span><b>${bp.toFixed(1)}</b>
+    <span>Max health, fresh food</span><b>${maxHP(1).toFixed(0)}</b><span>Guard limit, fresh food</span><b>${(maxHP(1) * P.staggerDamageFactor).toFixed(1)}</b>
+    <span>Guard limit, half food</span><b>${(maxHP(0.5) * P.staggerDamageFactor).toFixed(1)}</b>`
+    + (S.now != null ? `<span>Max health now (from save)</span><b>${maxHP(S.now).toFixed(0)}</b><span>Guard limit now</span><b>${(maxHP(S.now) * P.staggerDamageFactor).toFixed(1)}</b>` : "");
+
+  // tabs with summary pips
+  [...$("tabs").children].forEach(t => {
+    t.setAttribute("aria-selected", t.dataset.b === S.biome);
+    const es = Object.values(DATA.enemies).filter(e => e.biome === t.dataset.b && !e.boss);
+    const counts = { g: 0, o: 0, r: 0 }; es.forEach(e => { const c = enemyCls(e); if (c in counts) counts[c]++; });
+    t.querySelector(".pips").innerHTML = ["r", "o", "g"].flatMap(c => Array(Math.min(counts[c], 6)).fill(`<i class="pip ${c}" style="background:var(--c)"></i>`)).join("");
+  });
+
+  const list = Object.entries(DATA.enemies).filter(([, e]) => e.biome === S.biome).sort((a, b) => a[1].boss - b[1].boss || RANK[enemyCls(b[1])] - RANK[enemyCls(a[1])] || a[1].label.localeCompare(b[1].label));
+  if (!list.find(([k]) => k === S.enemy)) S.enemy = list[0][0];
+  $("cards").innerHTML = list.map(([k, e]) => {
+    const c = enemyCls(e);
+    const chips = S.view === "stagger"
+      ? (e.stagF <= 0 ? `<span class="chip d">can't be staggered</span>` : weapon().swings.map(sw => { const r = evalSwing(e, sw); return `<span class="chip ${stagCls(r)}">${sw.name.replace("Light combo finisher", "Finisher").replace("Light attack", "Light")} ${r.p >= 0.999 ? "1 hit" : r.p > 0 ? Math.round(r.p * 100) + "% 1 hit" : hitsText(r) + " hits"}</span>`; }).join(""))
+      : e.rows.map(r => { const rc = rowCls(r); return `<span class="chip ${rc}">${r.name.replace(/ \((combo finisher|area blast)\)/, m => m.includes("combo") ? " ×2" : " blast")}</span>`; }).join("");
+    return `<button type="button" class="card ${c}" data-e="${k}" aria-current="${k === S.enemy}"><span class="nm">${e.label}${e.guess ? " ?" : ""}<small>${e.boss ? "boss" : e.health * (S.view === "stagger" ? S.stars + 1 : 1) + " hp"}</small></span><span class="chips">${chips}</span></button>`;
+  }).join("");
+  renderDetail();
+}
+
+function renderStagger(e) {
+  const w = weapon(), q = Math.min(S.wq, w.maxQ);
+  const fmt = v => v.toFixed(0);
+  const head = `<div class="dhead"><h3>${e.label}</h3><span class="note">${e.biome}${e.guess ? " (biome guessed)" : ""} · ${S.stars} star${S.stars === 1 ? "" : "s"} · ${e.health * (S.stars + 1)} hp · ${w.label} q${q}, ${w.skillName.toLowerCase()} skill ${S.wskill}</span></div>`;
+  const res = STAGGER.filter(k => (w.damage[k] || 0) > 0).map(k => { const m = MODMULT[e.mods[k] || 0]; return m === 1 ? "" : `${m < 1 ? "resists" : "weak to"} ${k} (×${m})`; }).filter(Boolean).join(", ");
+  if (e.stagF <= 0) { $("detail").innerHTML = head + `<p class="explain">This enemy has no stagger bar: nothing staggers it.</p>`; return; }
+  const rows = w.swings.map(sw => { const r = evalSwing(e, sw);
+    return `<tr class="${stagCls(r)}"><td>${sw.name}</td><td class="num">×${sw.stag}</td><td class="num">${fmt(r.D * r.lo)}–${fmt(r.D * r.hi)}</td><td class="num">${fmt(r.sMin)}–${fmt(r.sMax)}</td><td class="num">${fmt(r.thr)}</td><td class="verdict">${r.p >= 0.999 ? "Always staggers in 1 hit" : r.p > 0 ? Math.round(r.p * 100) + "% in 1 hit, else " + r.hitsWorst : hitsText(r) + " hits"}</td></tr>`; }).join("");
+  const notes = w.swings.map(sw => `<li><b>${sw.name}:</b> ${swingNotes(sw)}.</li>`).join("");
+  $("detail").innerHTML = head + `<div class="tablewrap"><table><thead><tr><th>Swing</th><th class="num">Stagger mult</th><th class="num">Damage per hit</th><th class="num">Stagger per hit</th><th class="num">Stagger limit</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="note" style="margin-top:6px">Only blunt, slash, pierce and lightning count toward stagger. Ranges come from your skill: each hit rolls ${(skillRange(S.wskill)[0] * 100).toFixed(0)}–${(skillRange(S.wskill)[1] * 100).toFixed(0)}% damage at skill ${S.wskill}. ${res ? "This enemy " + res + ". " : ""}Hit counts assume the hits land within a few seconds (the bar drains fully in 5 s)${S.extra ? `, with ${S.extra} extra thing${S.extra > 1 ? "s" : ""} caught in swings that share damage` : ""}.</div>
+    <ul class="explain">${notes}</ul>`;
+}
+
+function renderDetail() {
+  const e = DATA.enemies[S.enemy]; if (!e) return;
+  if (S.view === "stagger") return renderStagger(e);
+  S.row = Math.min(S.row || 0, e.rows.length - 1);
+  const rows = e.rows.map((r, i) => { const n = need(r), c = r.unblock ? "d" : cls(n), v1 = evalRow(r, 1);
+    return `<tr data-i="${i}" aria-selected="${i === S.row}" class="${c}"><td>${r.name}</td><td class="num">${sum(v1.raw, TYPES).toFixed(0)}</td>
+      <td class="num">${v1.stag == null ? "–" : v1.stag.toFixed(1)}</td><td class="num">${v1.limit.toFixed(1)}</td>
+      <td class="num">${v1.fullHit.toFixed(0)}${v1.dot ? ` <span class="note">+${v1.dot.toFixed(0)} dot</span>` : ""}</td><td class="verdict">${verdict(r, n)}</td></tr>`; }).join("");
+  $("detail").innerHTML = `<div class="dhead"><h3>${e.label}</h3><span class="note">${e.biome}${e.guess ? " (biome guessed)" : ""} · ${S.stars} star${S.stars === 1 ? "" : "s"} · ${S.diff}% enemy damage${S.players > 1 ? " · " + S.players + " players" : ""}</span></div>
+    <div class="tablewrap"><table><thead><tr><th>Attack</th><th class="num">Hit</th><th class="num">Gets past shield</th><th class="num">Guard limit</th><th class="num">Full hit on you</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="note" style="margin-top:6px">Columns at fresh food. "Gets past shield" is the stagger damage left after your block; the guard breaks when it reaches the guard limit (40% of max health). "Full hit on you" is what lands after armor if the guard breaks. Pick an attack to see its curve.</div>
+    <div class="chart" id="chart"></div><div class="readout num" id="readout"></div><div class="explain" id="explain"></div>`;
+  $("detail").querySelector("tbody").onclick = ev => { const tr = ev.target.closest("tr"); if (!tr) return; S.row = +tr.dataset.i; save(); renderDetail(); };
+  drawChart(e.rows[S.row]);
+}
+
+function drawChart(row) {
+  const W = 720, H = 300, L = 48, R = 16, T = 16, B = 36, pw = W - L - R, ph = H - T - B;
+  const pts = Array.from({ length: 101 }, (_, i) => evalRow(row, i / 100));
+  const n = need(row);
+  const ymax = Math.max(...pts.map(p => Math.max(p.hp, p.fullHit, p.stag || 0))) * 1.08;
+  const x = t => L + t * pw, y = v => T + ph - (v / ymax) * ph;
+  const line = (f, col, dash = "") => `<path d="${pts.map((p, i) => (i ? "L" : "M") + x(i / 100).toFixed(1) + " " + y(f(p)).toFixed(1)).join("")}" fill="none" stroke="${col}" stroke-width="2.2" ${dash ? `stroke-dasharray="${dash}"` : ""}/>`;
+  const step = ymax > 400 ? 100 : ymax > 160 ? 50 : ymax > 60 ? 20 : 10;
+  let grid = ""; for (let v = 0; v <= ymax; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  for (let t = 0; t <= 1.0001; t += 0.2) grid += `<text x="${x(t)}" y="${H - 14}" text-anchor="middle">${Math.round(t * 100)}%</text>`;
+  grid += `<text x="${L + pw / 2}" y="${H - 1}" text-anchor="middle">food time left</text>`;
+  const c = row.unblock ? "var(--dodge)" : `var(--${({ g: "ok", o: "warn", r: "bad" })[cls(n)]})`;
+  let shade = "", mark = "";
+  if (!row.unblock && n > 0) {
+    const xe = n === Infinity ? x(1) : x(n);
+    shade = `<rect x="${L}" y="${T}" width="${xe - L}" height="${ph}" fill="var(--bad)" opacity="0.08"/>`;
+    if (n !== Infinity) mark = `<line x1="${xe}" x2="${xe}" y1="${T}" y2="${T + ph}" stroke="${c}" stroke-width="2"/><text x="${Math.min(xe + 6, W - R - 150)}" y="${T + 14}" style="fill:${c};font-weight:600">parry holds from ${pct(n)}</text>`;
+  }
+  if (S.now != null) mark += `<line x1="${x(S.now)}" x2="${x(S.now)}" y1="${T}" y2="${T + ph}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2 3"/><text x="${Math.max(x(S.now) - 6, L + 40)}" y="${T + ph - 6}" text-anchor="end" style="fill:var(--ink);font-weight:600">now</text>`;
+  const lines = line(p => p.hp, "var(--curve2)", "4 4") + line(p => p.limit, "var(--curve)") + line(p => p.fullHit, "var(--bad)", "7 4")
+    + (row.unblock ? "" : line(p => p.stag, c));
+  $("chart").innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Guard limit versus damage across food time left">${grid}${shade}${lines}${mark}
+    <line id="hov" x1="0" x2="0" y1="${T}" y2="${T + ph}" stroke="var(--muted)" stroke-width="1" opacity="0"/><rect x="${L}" y="${T}" width="${pw}" height="${ph}" fill="transparent" id="hit"/></svg>
+    <div class="legend" style="margin-top:4px"><span><i class="sw" style="background:var(--curve)"></i>Guard limit (40% max health)</span>${row.unblock ? "" : `<span><i class="sw" style="background:${c}"></i>Gets past your shield</span>`}<span><i class="sw" style="background:var(--bad)"></i>Full hit if the guard breaks</span><span><i class="sw" style="background:var(--curve2)"></i>Max health</span></div>`;
+  const svg = $("chart").querySelector("svg"), hov = svg.querySelector("#hov");
+  const show = t => { const p = evalRow(row, t); hov.setAttribute("x1", x(t)); hov.setAttribute("x2", x(t)); hov.setAttribute("opacity", 1);
+    $("readout").textContent = `${pct(t)} food: max health ${p.hp.toFixed(0)}, guard limit ${p.limit.toFixed(1)}` + (p.stag == null ? "" : `, gets past shield ${p.stag.toFixed(1)}`) + `, full hit ${p.fullHit.toFixed(0)} → ${row.unblock ? (p.fullHit >= p.hp ? "dead" : "you live") : p.holds ? "guard holds" : (p.fullHit >= p.hp ? "guard breaks, dead" : "guard breaks, you live")}`; };
+  svg.querySelector("#hit").addEventListener("pointermove", ev => { const r = svg.getBoundingClientRect(); const t = Math.max(0, Math.min(1, ((ev.clientX - r.left) / r.width * W - L) / pw)); show(Math.round(t * 100) / 100); });
+  show(S.now != null ? S.now : n !== Infinity && n > 0 ? Math.min(1, Math.round(n * 100) / 100) : 1);
+  const deathFree = pts.findIndex(p => p.fullHit < p.hp);
+  $("explain").textContent = row.unblock
+    ? `This hit ignores blocking (${row.why}). Dodge it. ` + (deathFree === -1 ? "It kills you even on full food." : deathFree === 0 ? "It won't one-shot you." : `It one-shots you below ${deathFree}% food.`)
+    : (n === Infinity ? "Even on fresh food, what gets past your shield is more than your guard can absorb, so the hit breaks through and staggers you. "
+      : n === 0 ? "Your guard holds at any food level. " : `Below ${pct(n)} food left, the guard breaks: you are staggered and take the full hit. `)
+      + (deathFree === -1 ? "A broken guard kills you outright at every food level." : deathFree > 0 ? `A broken guard one-shots you below ${deathFree}% food.` : "A broken guard hurts but doesn't one-shot you.")
+      + (S.now != null && !row.unblock ? ` Right now, from your save: ${(p => p.holds ? "your guard holds." : p.leftHit >= p.hp ? "your guard breaks and the hit kills you." : "your guard breaks, you live.")(evalRow(row, S.now))}` : "");
+}
+
+// ---- character file ----
+const ago = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "just now" : m < 60 ? m + " min ago" : m < 1440 ? Math.round(m / 60) + " h ago" : Math.round(m / 1440) + " days ago"; };
+function applyChar(r, name, modified) {
+  const byHash = list => { const m = {}; list.forEach(x => { if (x.id) m[stableHash(x.id)] = x; }); return m; };
+  const BL = byHash(blockers), FD = byHash(foods), AR = {}; Object.entries(DATA.armor).forEach(([id, v]) => AR[stableHash(id)] = v);
+  const eq = r.items.filter(i => i.equipped), out = [];
+  const bl = eq.filter(i => BL[i.hash]).sort((a, b) => BL[b.hash].shield - BL[a.hash].shield)[0];
+  if (bl) { S.blocker = BL[bl.hash].label; S.quality = bl.quality; out.push(`<b>${S.blocker}</b> q${bl.quality}`); }
+  else out.push("no shield equipped in the save, kept <b>" + S.blocker + "</b>");
+  S.skill = Math.round((r.skills[6] || 0) * 10) / 10; out.push(`block skill <b>${S.skill}</b>`);
+  const WP = byHash(weapons); S.wskills = r.skills;
+  const wp = eq.filter(i => WP[i.hash])[0] || r.items.filter(i => WP[i.hash] && WP[i.hash].swings.some(s => s.stag > 1)).sort((a, b) => b.quality - a.quality)[0];
+  if (wp) { S.wpn = WP[wp.hash].label; S.wq = wp.quality; }
+  S.wskill = Math.round((r.skills[weapon().skill] || 0) * 10) / 10;
+  out.push(`weapon <b>${S.wpn}</b> q${S.wq} (${weapon().skillName.toLowerCase()} ${S.wskill})`);
+  S.armor = eq.reduce((s, i) => s + (AR[i.hash] ? AR[i.hash][0] + Math.max(0, i.quality - 1) * AR[i.hash][1] : 0), 0); out.push(`armor <b>${S.armor}</b>`);
+  const fs = r.foods.map(f => ({ f: FD[stableHash(f.name)], time: f.time })).filter(x => x.f);
+  S.foods = [0, 1, 2].map(i => fs[i] ? fs[i].f.label : "");
+  if (fs.length) {
+    const hpNow = P.baseHP + fs.reduce((s, x) => s + x.f.hp * foodFrac(x.time / x.f.burn), 0);
+    let lo = 0, hi = 1; for (let i = 0; i < 40; i++) { const m = (lo + hi) / 2; maxHP(m) < hpNow ? lo = m : hi = m; }
+    S.now = hi;
+    out.push("foods " + fs.map(x => `<b>${x.f.label}</b> ${Math.ceil(x.time / 60)}m`).join(", "));
+  } else { S.now = null; out.push("no food eaten"); }
+  $("fchstatus").innerHTML = `Loaded <b>${name}</b>, saved ${ago(modified)}: ${out.join(" · ")}. Re-save in game (F5, <code>save</code>) and reload to refresh.`;
+  $("wpn").value = S.wpn; $("wskill").value = S.wskill;
+  $("blocker").value = S.blocker; $("skill").value = S.skill; $("armor").value = S.armor; fillFoods($("fsearch").value.trim().toLowerCase());
+  update();
+}
+let fchHandle = null, dirHandle = null;
+async function readFile(file) {
+  try { applyChar(readFch(await file.arrayBuffer()), file.name, file.lastModified); }
+  catch (e) { $("fchstatus").textContent = "Couldn't read " + file.name + ": " + e.message; }
+}
+// newest character save in a folder; skips the game's .old copies and _backup_ files
+const isSave = n => /\.fch$/i.test(n) && !/_backup/i.test(n);
+const newest = files => files.filter(f => isSave(f.name)).sort((a, b) => b.lastModified - a.lastModified)[0];
+const loadNewest = f => f ? readFile(f) : ($("fchstatus").textContent = "No character saves (.fch) in that folder. Pick the characters folder itself.");
+async function scanDir() { const fs = []; for await (const h of dirHandle.values()) if (h.kind === "file" && isSave(h.name)) fs.push(await h.getFile()); return newest(fs); }
+function initLoader() {
+  $("fchfile").addEventListener("change", e => { if (e.target.files[0]) readFile(e.target.files[0]); e.target.value = ""; });
+  $("fchdir").addEventListener("change", e => { loadNewest(newest([...e.target.files])); e.target.value = ""; });
+  $("loaddir").onclick = async () => {
+    if (window.showDirectoryPicker) {
+      try { dirHandle = await showDirectoryPicker({ id: "valheim-characters", mode: "read" }); fchHandle = null; $("reloadfch").hidden = false; return loadNewest(await scanDir()); }
+      catch (e) { if (e.name === "AbortError") return; dirHandle = null; }
+    }
+    $("fchdir").click();
+  };
+  $("loadfch").onclick = async () => {
+    if (window.showOpenFilePicker) {
+      try { [fchHandle] = await showOpenFilePicker({ types: [{ description: "Valheim character", accept: { "application/octet-stream": [".fch"] } }] }); dirHandle = null; $("reloadfch").hidden = false; return readFile(await fchHandle.getFile()); }
+      catch (e) { if (e.name === "AbortError") return; fchHandle = null; }
+    }
+    $("fchfile").click();
+  };
+  $("reloadfch").onclick = async () => { if (dirHandle) loadNewest(await scanDir()); else if (fchHandle) readFile(await fchHandle.getFile()); };
+}
+
+initControls(); update();
+</script>
