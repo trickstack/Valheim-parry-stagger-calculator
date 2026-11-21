@@ -35,7 +35,7 @@ function readFch(buf) {
   if (invVer < 108) throw new Error("old inventory format (" + invVer + "); log in and save once");
   const nItems = u16();
   for (let i = 0; i < nItems; i++) {
-    const it = { durability: int() / 100 }; o += 3; const fl = byte();
+    const it = { durability: int() / 100, x: byte(), y: byte() }; o += 1; const fl = byte(); // y 0 = hotbar
     it.equipped = !!(fl & 2);
     it.quality = fl & 4 ? u16() : 1;
     if (fl & 8) u16();

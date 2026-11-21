@@ -551,15 +551,17 @@ function applyChar(r, name, modified) {
   const byHash = list => { const m = {}; list.forEach(x => { if (x.id) m[stableHash(x.id)] = x; }); return m; };
   const BL = byHash(blockers), FD = byHash(foods), AR = {}; Object.entries(DATA.armor).forEach(([id, v]) => AR[stableHash(id)] = v);
   const eq = r.items.filter(i => i.equipped), out = [];
-  // equipped shield, else the strongest shield in the inventory, else an equipped weapon you'd block with
+  // equipped shield, else the strongest one on the hotbar, else the strongest in the inventory, else an equipped weapon you'd block with
   const bpOf = i => BL[i.hash].bp + Math.max(0, i.quality - 1) * BL[i.hash].bpLvl;
-  const shields = r.items.filter(i => BL[i.hash] && BL[i.hash].shield).sort((a, b) => b.equipped - a.equipped || bpOf(b) - bpOf(a));
+  const shields = r.items.filter(i => BL[i.hash] && BL[i.hash].shield).sort((a, b) => b.equipped - a.equipped || (b.y === 0) - (a.y === 0) || bpOf(b) - bpOf(a));
   const bl = shields[0] || eq.filter(i => BL[i.hash])[0];
-  if (bl) { S.blocker = BL[bl.hash].label; S.quality = bl.quality; out.push(`<b>${S.blocker}</b> q${bl.quality}${bl.equipped ? "" : " (from inventory)"}`); }
+  if (bl) { S.blocker = BL[bl.hash].label; S.quality = bl.quality; out.push(`<b>${S.blocker}</b> q${bl.quality}${bl.equipped ? "" : bl.y === 0 ? " (from hotbar)" : " (from inventory)"}`); }
   else out.push("no shield in the save, kept <b>" + S.blocker + "</b>");
   S.skill = Math.round((r.skills[6] || 0) * 10) / 10; out.push(`block skill <b>${S.skill}</b>`);
   const WP = byHash(weapons); S.wskills = r.skills;
-  const wp = eq.filter(i => WP[i.hash])[0] || r.items.filter(i => WP[i.hash] && WP[i.hash].swings.some(s => s.stag > 1)).sort((a, b) => b.quality - a.quality)[0];
+  const big = i => WP[i.hash].swings.some(s => s.stag > 1); // equipped, else hotbar (high-stagger first, then left to right), else best high-stagger weapon in the bag
+  const wp = eq.filter(i => WP[i.hash])[0] || r.items.filter(i => WP[i.hash] && i.y === 0).sort((a, b) => big(b) - big(a) || a.x - b.x)[0]
+    || r.items.filter(i => WP[i.hash] && big(i)).sort((a, b) => b.quality - a.quality)[0];
   if (wp) { S.wpn = WP[wp.hash].label; S.wq = wp.quality; }
   S.wskill = Math.round((r.skills[weapon().skill] || 0) * 10) / 10;
   out.push(`weapon <b>${S.wpn}</b> q${S.wq} (${weapon().skillName.toLowerCase()} ${S.wskill})`);
