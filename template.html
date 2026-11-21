@@ -128,7 +128,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
       </div>
       <div data-v="stagger">
         <h2>Your weapon</h2>
-        <div class="field"><label for="wpn">Weapon</label><select id="wpn"></select></div>
+        <div class="field"><label for="wpn">Weapon</label><div class="combo"><input id="wpn" role="combobox" aria-expanded="false" aria-controls="wpn-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Type to search"><span class="caret" aria-hidden="true">▼</span><ul id="wpn-list" role="listbox" hidden></ul></div></div>
         <div class="row" style="margin-top:8px">
           <div class="field" style="flex:1"><label for="wq">Quality</label><select id="wq"></select></div>
           <div class="field" style="flex:1"><label for="wskill" id="wskilll">Weapon skill</label><input id="wskill" type="number" min="0" max="100" step="1"></div>
@@ -143,7 +143,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
       </div>
       <div data-v="parry">
         <h2>Blocker</h2>
-        <div class="field"><label for="blocker">Shield or weapon</label><select id="blocker"></select></div>
+        <div class="field"><label for="blocker">Shield or weapon</label><div class="combo"><input id="blocker" role="combobox" aria-expanded="false" aria-controls="blocker-list" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Type to search"><span class="caret" aria-hidden="true">▼</span><ul id="blocker-list" role="listbox" hidden></ul></div></div>
         <div class="row" style="margin-top:8px">
           <div class="field" style="flex:1"><label for="quality">Quality</label><select id="quality"></select></div>
           <div class="field" style="flex:1"><label for="skill">Block skill</label><input id="skill" type="number" min="0" max="100" step="1"></div>
@@ -327,11 +327,12 @@ function need(row) {
 const cls = n => n === Infinity ? "r" : n <= S.cg / 100 ? "g" : n <= S.cr / 100 ? "o" : "r";
 const rowCls = r => r.unblock ? "d" : cls(need(r));
 const pct = x => Math.round(x * 100) + "%";
+const pctUp = x => Math.ceil(x * 100 - 1e-9) + "%"; // thresholds: never claim it holds below where it does
 const RANK = { g: 0, o: 1, r: 2 };
 function enemyCls(e) { return S.view === "stagger" ? stagEnemyCls(e) : parryEnemyCls(e); }
 function parryEnemyCls(e) { let w = null; for (const r of e.rows) { if (r.unblock) continue; const c = rowCls(r); if (w === null || RANK[c] > RANK[w]) w = c; } return w || "d"; }
 const verdict = (r, n) => r.unblock ? (r.why === "always staggers" ? "Always staggers you: dodge" : "Can't be blocked: dodge")
-  : n === Infinity ? "Breaks your guard even on full food" : n === 0 ? "Holds even on empty food" : "Holds from " + pct(n) + " food left";
+  : n === Infinity ? "Breaks your guard even on full food" : n === 0 ? "Holds even on empty food" : "Holds from " + pctUp(n) + " food left";
 
 // ---- stagger (Attack.DoMeleeAttack, Skills.GetRandomSkillFactor, Character.ApplyDamage/AddStaggerDamage) ----
 const weapons = DATA.weapons;
@@ -369,39 +370,42 @@ function swingNotes(sw) {
 // ---- UI ----
 function fillSelect(el, items, val) { el.innerHTML = items.map(([v, t]) => `<option value="${v}">${t}</option>`).join(""); el.value = val; }
 let fillFoods = () => {};
+// searchable dropdown: click opens the full grouped list, typing filters it, arrows + Enter or click picks.
+// groups(q) -> [[groupLabel, [[value, detail], ...]], ...]
+function combo(id, groups, get, pick, allowEmpty) {
+  const inp = $(id), ul = $(id + "-list"); let opts = [], act = -1;
+  const esc = s => s.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const mark = () => { opts.forEach((o, k) => o.setAttribute("aria-selected", k === act)); if (opts[act]) opts[act].scrollIntoView({ block: "nearest" }); };
+  const render = q => {
+    ul.innerHTML = (allowEmpty ? `<li role="option" data-v="">(empty)</li>` : "") + groups(q.toLowerCase()).filter(([, items]) => items.length)
+      .map(([g, items]) => `<li class="grp" role="presentation">${g}</li>` + items.map(([v, d]) => `<li role="option" data-v="${esc(v)}">${esc(v)} <small>${esc(d)}</small></li>`).join("")).join("");
+    opts = [...ul.querySelectorAll("[role=option]")];
+    act = q ? Math.min(allowEmpty ? 1 : 0, opts.length - 1) : Math.max(0, opts.findIndex(o => o.dataset.v === get())); mark();
+  };
+  const open = () => { if (!ul.hidden) return; ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(""); inp.select(); };
+  const close = () => { ul.hidden = true; inp.setAttribute("aria-expanded", "false"); inp.value = get(); };
+  const choose = v => { close(); pick(v); inp.value = get(); };
+  inp.addEventListener("focus", open); inp.addEventListener("click", open); inp.addEventListener("blur", close);
+  inp.addEventListener("input", () => { ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(inp.value.trim()); });
+  inp.addEventListener("keydown", e => {
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); open(); act = Math.max(0, Math.min(opts.length - 1, act + (e.key === "ArrowDown" ? 1 : -1))); mark(); }
+    else if (e.key === "Enter" && !ul.hidden && opts[act]) { e.preventDefault(); choose(opts[act].dataset.v); }
+    else if (e.key === "Escape") close();
+  });
+  ul.addEventListener("mousedown", e => { const o = e.target.closest("[role=option]"); e.preventDefault(); if (o) choose(o.dataset.v); });
+}
+
 function initControls() {
-  const sh = blockers.filter(b => b.shield), wp = blockers.filter(b => !b.shield);
-  $("blocker").innerHTML = `<optgroup label="Shields">${sh.map(b => `<option value="${b.label}">${b.label} (block ${b.bp}${b.parry > 1 ? ", parry ×" + b.parry : ", can't parry"})</option>`).join("")}</optgroup>`
-    + `<optgroup label="Weapons">${wp.map(b => `<option value="${b.label}">${b.label} (block ${b.bp}${b.parry > 1 ? ", parry ×" + b.parry : ""})</option>`).join("")}</optgroup>`;
+  const has = (s, q) => s.toLowerCase().includes(q);
+  combo("blocker", q => [["Shields", true], ["Weapons", false]].map(([g, sh]) => [g, blockers.filter(b => b.shield === sh && has(b.label, q))
+      .map(b => [b.label, `block ${b.bp}${b.parry > 1 ? ", parry ×" + b.parry : sh ? ", can't parry" : ""}`])]),
+    () => S.blocker, v => { S.blocker = v; update(); });
   $("blocker").value = S.blocker;
   const GROUPS = [["Health", "Health", f => f.hp], ["Stamina", "Stamina", f => f.st], ["Eitr", "Eitr", f => f.eitr], ["Balanced", "Balanced", f => f.hp + f.st], ["Feasts", "Feasts", f => f.hp + f.st]];
   const ftext = f => `${f.label} · ${f.hp} hp · ${f.st} st${f.eitr ? ` · ${f.eitr} eitr` : ""} · ${Math.round(f.burn / 60)} min`;
-  // searchable dropdown: opens on click/focus with the full grouped list, typing filters it
-  const foodCombo = i => {
-    const inp = $("f" + i), ul = $("f" + i + "-list"); let opts = [], act = -1;
-    const mark = () => { opts.forEach((o, k) => o.setAttribute("aria-selected", k === act)); if (opts[act]) opts[act].scrollIntoView({ block: "nearest" }); };
-    const render = q => {
-      q = q.toLowerCase();
-      ul.innerHTML = `<li role="option" data-v="">(empty)</li>` + GROUPS.map(([kind, label, key]) => {
-        const fs = foods.filter(f => f.kind === kind && f.label.toLowerCase().includes(q)).sort((a, b) => key(b) - key(a));
-        return fs.length ? `<li class="grp" role="presentation">${label}</li>` + fs.map(f => `<li role="option" data-v="${f.label}">${f.label} <small>${ftext(f).split(" · ").slice(1).join(" · ")}</small></li>`).join("") : "";
-      }).join("");
-      opts = [...ul.querySelectorAll("[role=option]")];
-      act = q ? Math.min(1, opts.length - 1) : Math.max(0, opts.findIndex(o => o.dataset.v === (S.foods[i] || ""))); mark();
-    };
-    const open = () => { if (!ul.hidden) return; ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(""); inp.select(); };
-    const close = () => { ul.hidden = true; inp.setAttribute("aria-expanded", "false"); inp.value = S.foods[i] || ""; };
-    const pick = v => { S.foods[i] = v; S.now = null; close(); update(); };
-    inp.addEventListener("focus", open); inp.addEventListener("click", open); inp.addEventListener("blur", close);
-    inp.addEventListener("input", () => { ul.hidden = false; inp.setAttribute("aria-expanded", "true"); render(inp.value.trim()); });
-    inp.addEventListener("keydown", e => {
-      if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); open(); act = Math.max(0, Math.min(opts.length - 1, act + (e.key === "ArrowDown" ? 1 : -1))); mark(); }
-      else if (e.key === "Enter" && !ul.hidden && opts[act]) { e.preventDefault(); pick(opts[act].dataset.v); }
-      else if (e.key === "Escape") close();
-    });
-    ul.addEventListener("mousedown", e => { const o = e.target.closest("[role=option]"); e.preventDefault(); if (o) pick(o.dataset.v); });
-  };
-  [0, 1, 2].forEach(foodCombo);
+  [0, 1, 2].forEach(i => combo("f" + i, q => GROUPS.map(([kind, label, key]) => [label, foods.filter(f => f.kind === kind && f.label.toLowerCase().includes(q))
+      .sort((a, b) => key(b) - key(a)).map(f => [f.label, ftext(f).split(" · ").slice(1).join(" · ")])]),
+    () => S.foods[i] || "", v => { S.foods[i] = v; S.now = null; update(); }, true));
   fillFoods = () => [0, 1, 2].forEach(i => { $("f" + i).value = S.foods[i] || ""; });
   fillFoods();
   $("skill").value = S.skill; $("armor").value = S.armor; $("players").value = S.players; $("diff").value = String(S.diff);
@@ -412,12 +416,13 @@ function initControls() {
   $("m-parry").onclick = () => { S.mode = "parry"; update(); };
   $("m-block").onclick = () => { S.mode = "block"; update(); };
   const bind = (id, key, num) => $(id).addEventListener(id === "cg" || id === "cr" ? "input" : "change", e => { S[key] = num ? +e.target.value : e.target.value; update(); });
-  bind("blocker", "blocker"); bind("quality", "quality", 1); bind("skill", "skill", 1); bind("armor", "armor", 1); bind("players", "players", 1);
+  bind("quality", "quality", 1); bind("skill", "skill", 1); bind("armor", "armor", 1); bind("players", "players", 1);
   bind("diff", "diff", 1); bind("cg", "cg", 1); bind("cr", "cr", 1);
   const groups = [...new Set(weapons.map(w => w.skillName))];
-  $("wpn").innerHTML = groups.map(g => `<optgroup label="${g}">${weapons.filter(w => w.skillName === g).map(w => `<option value="${w.label}">${w.label} (${Object.entries(w.damage).filter(([k]) => STAGGER.includes(k)).map(([k, v]) => v + " " + k).join(", ")}${w.swings.some(s => s.stag > 1) ? ", stagger ×" + Math.max(...w.swings.map(s => s.stag)) : ""})</option>`).join("")}</optgroup>`).join("");
+  combo("wpn", q => groups.map(g => [g, weapons.filter(w => w.skillName === g && (has(w.label, q) || has(g, q)))
+      .map(w => [w.label, Object.entries(w.damage).filter(([k]) => STAGGER.includes(k)).map(([k, v]) => v + " " + k).join(", ") + (w.swings.some(s => s.stag > 1) ? ", stagger ×" + Math.max(...w.swings.map(s => s.stag)) : "")])]),
+    () => S.wpn, v => { S.wpn = v; const w = weapon(); if (S.wskills && S.wskills[w.skill] != null) { S.wskill = Math.round(S.wskills[w.skill] * 10) / 10; $("wskill").value = S.wskill; } update(); });
   $("wpn").value = S.wpn; $("wskill").value = S.wskill; $("pdmg").value = String(S.pdmg); $("extra").value = String(S.extra);
-  $("wpn").addEventListener("change", e => { S.wpn = e.target.value; const w = weapon(); if (S.wskills && S.wskills[w.skill] != null) { S.wskill = Math.round(S.wskills[w.skill] * 10) / 10; $("wskill").value = S.wskill; } update(); });
   bind("wq", "wq", 1); bind("wskill", "wskill", 1); bind("pdmg", "pdmg", 1); bind("extra", "extra", 1);
   $("view").onclick = e => { const b = e.target.closest("button"); if (!b) return; S.view = b.dataset.view; update(); };
   const short = mods => Object.entries(mods).map(([bit, mod]) => `${TYPES.find(k => TYPEBIT[k] == bit)} ${MODNAME[mod].replace(/ ×.*/, "")}`).join(", ");
@@ -518,7 +523,7 @@ function drawChart(row) {
   if (!row.unblock && n > 0) {
     const xe = n === Infinity ? x(1) : x(n);
     shade = `<rect x="${L}" y="${T}" width="${xe - L}" height="${ph}" fill="var(--bad)" opacity="0.08"/>`;
-    if (n !== Infinity) mark = `<line x1="${xe}" x2="${xe}" y1="${T}" y2="${T + ph}" stroke="${c}" stroke-width="2"/><text x="${Math.min(xe + 6, W - R - 150)}" y="${T + 14}" style="fill:${c};font-weight:600">parry holds from ${pct(n)}</text>`;
+    if (n !== Infinity) mark = `<line x1="${xe}" x2="${xe}" y1="${T}" y2="${T + ph}" stroke="${c}" stroke-width="2"/><text x="${Math.min(xe + 6, W - R - 150)}" y="${T + 14}" style="fill:${c};font-weight:600">parry holds from ${pctUp(n)}</text>`;
   }
   if (S.now != null) mark += `<line x1="${x(S.now)}" x2="${x(S.now)}" y1="${T}" y2="${T + ph}" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2 3"/><text x="${Math.max(x(S.now) - 6, L + 40)}" y="${T + ph - 6}" text-anchor="end" style="fill:var(--ink);font-weight:600">now</text>`;
   const lines = line(p => p.hp, "var(--curve2)", "4 4") + line(p => p.limit, "var(--curve)") + line(p => p.fullHit, "var(--bad)", "7 4")
@@ -535,7 +540,7 @@ function drawChart(row) {
   $("explain").textContent = row.unblock
     ? `This hit ignores blocking (${row.why}). Dodge it. ` + (deathFree === -1 ? "It kills you even on full food." : deathFree === 0 ? "It won't one-shot you." : `It one-shots you below ${deathFree}% food.`)
     : (n === Infinity ? "Even on fresh food, what gets past your shield is more than your guard can absorb, so the hit breaks through and staggers you. "
-      : n === 0 ? "Your guard holds at any food level. " : `Below ${pct(n)} food left, the guard breaks: you are staggered and take the full hit. `)
+      : n === 0 ? "Your guard holds at any food level. " : `Below ${pctUp(n)} food left, the guard breaks: you are staggered and take the full hit. `)
       + (deathFree === -1 ? "A broken guard kills you outright at every food level." : deathFree > 0 ? `A broken guard one-shots you below ${deathFree}% food.` : "A broken guard hurts but doesn't one-shot you.")
       + (S.now != null && !row.unblock ? ` Right now, from your save: ${(p => p.holds ? "your guard holds." : p.leftHit >= p.hp ? "your guard breaks and the hit kills you." : "your guard breaks, you live.")(evalRow(row, S.now))}` : "");
 }
