@@ -29,7 +29,7 @@
 body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 14px; line-height: 1.45; }
 .wrap { max-width: 1280px; margin: 0 auto; padding-block: 20px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; margin-bottom: 16px; }
+header { display: grid; gap: 4px; margin-bottom: 16px; }
 h1 { font-family: var(--display); font-weight: 700; font-size: 34px; letter-spacing: .02em; margin: 0; text-transform: uppercase; }
 header p { margin: 0; color: var(--muted); max-width: 70ch; }
 h2 { font-family: var(--display); font-weight: 600; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
@@ -42,7 +42,7 @@ aside.panel { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
 .field label, .lbl { font-size: 12px; color: var(--muted); font-weight: 500; }
 .row { display: flex; gap: 8px; align-items: center; }
 .row > * { min-width: 0; }
-select, input[type=number] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
+select, input[type=number], input[list] { font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; width: 100%; }
 input[type=range] { width: 100%; accent-color: var(--accent); }
 .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
@@ -69,12 +69,12 @@ button:focus-visible, select:focus-visible, input:focus-visible, .card:focus-vis
 .sw { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
 .card { text-align: left; font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-left: 5px solid var(--c, var(--line));
-  border-radius: 6px; padding: 9px 10px; cursor: pointer; display: grid; gap: 6px; }
+  border-radius: 6px; padding: 9px 10px; cursor: pointer; display: grid; gap: 6px; align-content: start; }
 .card:hover { border-color: var(--c); }
 .card[aria-current=true] { box-shadow: 0 0 0 2px var(--c) inset; }
 .card .nm { font-weight: 600; display: flex; justify-content: space-between; gap: 6px; }
 .card .nm small { color: var(--muted); font-weight: 400; font-size: 11px; }
-.chips { display: flex; flex-wrap: wrap; gap: 4px; }
+.chips { display: flex; flex-wrap: wrap; gap: 4px; align-items: flex-start; }
 .chip { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--cb); color: var(--c); font-weight: 600; white-space: nowrap; }
 .g { --c: var(--ok); --cb: var(--ok-bg); } .o { --c: var(--warn); --cb: var(--warn-bg); } .r { --c: var(--bad); --cb: var(--bad-bg); } .d { --c: var(--dodge); --cb: var(--dodge-bg); }
 #detail { margin-top: 16px; }
@@ -145,10 +145,10 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
       </div>
       <div data-v="parry">
         <h2>Food</h2>
-        <div class="field" style="margin-bottom:6px"><label for="fsearch">Search food</label><input id="fsearch" type="search" placeholder="e.g. jerky, stew, honey" autocomplete="off"></div>
-        <div class="field"><label for="f0">Slot 1</label><select id="f0"></select></div>
-        <div class="field" style="margin-top:6px"><label for="f1">Slot 2</label><select id="f1"></select></div>
-        <div class="field" style="margin-top:6px"><label for="f2">Slot 3</label><select id="f2"></select></div>
+        <datalist id="foodlist"></datalist>
+        <div class="field"><label for="f0">Slot 1</label><input id="f0" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
+        <div class="field" style="margin-top:6px"><label for="f1">Slot 2</label><input id="f1" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
+        <div class="field" style="margin-top:6px"><label for="f2">Slot 3</label><input id="f2" list="foodlist" placeholder="Type to search, empty = no food" autocomplete="off"></div>
       </div>
       <div>
         <h2>Body and world</h2>
@@ -167,7 +167,7 @@ footer { margin-top: 24px; font-size: 12px; color: var(--muted); max-width: 90ch
         <div class="field" style="margin-top:6px"><label for="cr">Red if it needs more than <span id="crv" class="num"></span> food left</label><input id="cr" type="range" min="50" max="100" step="5"></div>
       </div>
       <div class="stats" id="stats" data-v="parry"></div>
-      <div class="note" id="exampleNote">Starts from an example Swamp-era loadout. Change anything; your choices are remembered in this browser.</div>
+      <div class="note" id="exampleNote">Starts from an example Black Forest loadout on Normal. Change anything; your choices are remembered in this browser.</div>
     </aside>
 
     <main>
@@ -238,12 +238,12 @@ for (const e of Object.values(DATA.enemies)) {
   e.rows = rows;
 }
 
-const DEFAULTS = { blocker: "Banded Shield", quality: 1, skill: 25, mode: "parry", foods: ["Sausages", "Black Soup", "Turnip Stew"],
-  armor: 46, players: 1, diff: 150, cg: 20, cr: 90, biome: "Black Forest", stars: 0, enemy: "troll",
-  res: [], view: "parry", wpn: "Iron Atgeir", wq: 2, wskill: 16, pdmg: 85, extra: 0, wskills: null };
+const DEFAULTS = { blocker: "Wood Shield", quality: 2, skill: 10, mode: "parry", foods: ["Deer Stew", "Boar Jerky", "Queen's Jam"],
+  armor: 24, players: 1, diff: 100, cg: 20, cr: 90, biome: "Black Forest", stars: 0, enemy: "troll",
+  res: [], view: "parry", wpn: "Bronze Atgeir", wq: 1, wskill: 10, pdmg: 100, extra: 0, wskills: null };
 let S = { ...DEFAULTS };
-try { const saved = JSON.parse(localStorage.getItem("parrycheck") || "null"); if (saved) S = { ...DEFAULTS, ...saved }; } catch (e) {}
-const save = () => { try { localStorage.setItem("parrycheck", JSON.stringify(S)); } catch (e) {} };
+try { const saved = JSON.parse(localStorage.getItem("parrycheck-v10") || "null"); if (saved) S = { ...DEFAULTS, ...saved }; } catch (e) {}
+const save = () => { try { localStorage.setItem("parrycheck-v10", JSON.stringify(S)); } catch (e) {} };
 
 // ---- game formulas (HitData.ApplyArmor, Humanoid.BlockAttack, Player.UpdateFood) ----
 const armorFn = (dmg, ac) => (ac < dmg / 2 ? dmg - ac : Math.min(1, dmg / (ac * 4)) * dmg);
@@ -367,14 +367,11 @@ function initControls() {
   $("blocker").value = S.blocker;
   const GROUPS = [["Health", "Health", f => f.hp], ["Stamina", "Stamina", f => f.st], ["Eitr", "Eitr", f => f.eitr], ["Balanced", "Balanced", f => f.hp + f.st], ["Feasts", "Feasts", f => f.hp + f.st]];
   const ftext = f => `${f.label} · ${f.hp} hp · ${f.st} st${f.eitr ? ` · ${f.eitr} eitr` : ""} · ${Math.round(f.burn / 60)} min`;
-  // rebuild each food list from scratch (hiding <option>s is unreliable across browsers); the current pick always stays
-  const fhtml = (q, keep) => `<option value="">(empty)</option>` + GROUPS.map(([kind, label, key]) => {
-    const fs = foods.filter(f => f.kind === kind && (!q || f.label === keep || f.label.toLowerCase().includes(q))).sort((a, b) => key(b) - key(a));
-    return fs.length ? `<optgroup label="${label}">${fs.map(f => `<option value="${f.label}">${ftext(f)}</option>`).join("")}</optgroup>` : "";
-  }).join("");
-  fillFoods = q => [0, 1, 2].forEach(i => { const sel = $("f" + i); sel.innerHTML = fhtml(q, S.foods[i]); sel.value = S.foods[i] || ""; });
-  fillFoods("");
-  $("fsearch").addEventListener("input", e => fillFoods(e.target.value.trim().toLowerCase()));
+  // native searchable list: type any part of a name; option label shows the stats
+  $("foodlist").innerHTML = GROUPS.flatMap(([kind, , key]) => foods.filter(f => f.kind === kind).sort((a, b) => key(b) - key(a)))
+    .map(f => `<option value="${f.label}" label="${f.kind} · ${ftext(f).split(" · ").slice(1).join(" · ")}"></option>`).join("");
+  fillFoods = () => [0, 1, 2].forEach(i => { $("f" + i).value = S.foods[i] || ""; });
+  fillFoods();
   $("skill").value = S.skill; $("armor").value = S.armor; $("players").value = S.players; $("diff").value = String(S.diff);
   $("cg").value = S.cg; $("cr").value = S.cr;
   $("tabs").innerHTML = DATA.biomes.map(b => `<button type="button" role="tab" data-b="${b}">${b}<span class="pips" data-pips="${b}"></span></button>`).join("");
@@ -385,7 +382,10 @@ function initControls() {
   const bind = (id, key, num) => $(id).addEventListener(id === "cg" || id === "cr" ? "input" : "change", e => { S[key] = num ? +e.target.value : e.target.value; update(); });
   bind("blocker", "blocker"); bind("quality", "quality", 1); bind("skill", "skill", 1); bind("armor", "armor", 1); bind("players", "players", 1);
   bind("diff", "diff", 1); bind("cg", "cg", 1); bind("cr", "cr", 1);
-  [0, 1, 2].forEach(i => $("f" + i).addEventListener("change", e => { S.foods[i] = e.target.value; S.now = null; update(); }));
+  [0, 1, 2].forEach(i => $("f" + i).addEventListener("change", e => {
+    const v = e.target.value.trim(), f = foods.find(x => x.label.toLowerCase() === v.toLowerCase());
+    if (v && !f) { e.target.value = S.foods[i] || ""; return; }
+    S.foods[i] = f ? f.label : ""; e.target.value = S.foods[i]; S.now = null; update(); }));
   const groups = [...new Set(weapons.map(w => w.skillName))];
   $("wpn").innerHTML = groups.map(g => `<optgroup label="${g}">${weapons.filter(w => w.skillName === g).map(w => `<option value="${w.label}">${w.label} (${Object.entries(w.damage).filter(([k]) => STAGGER.includes(k)).map(([k, v]) => v + " " + k).join(", ")}${w.swings.some(s => s.stag > 1) ? ", stagger ×" + Math.max(...w.swings.map(s => s.stag)) : ""})</option>`).join("")}</optgroup>`).join("");
   $("wpn").value = S.wpn; $("wskill").value = S.wskill; $("pdmg").value = String(S.pdmg); $("extra").value = String(S.extra);
@@ -542,7 +542,7 @@ function applyChar(r, name, modified) {
   } else { S.now = null; out.push("no food eaten"); }
   $("fchstatus").innerHTML = `Loaded <b>${name}</b>, saved ${ago(modified)}: ${out.join(" · ")}. Re-save in game (F5, <code>save</code>) and reload to refresh.`;
   $("wpn").value = S.wpn; $("wskill").value = S.wskill;
-  $("blocker").value = S.blocker; $("skill").value = S.skill; $("armor").value = S.armor; fillFoods($("fsearch").value.trim().toLowerCase());
+  $("blocker").value = S.blocker; $("skill").value = S.skill; $("armor").value = S.armor; fillFoods();
   update();
 }
 let fchHandle = null, dirHandle = null;
