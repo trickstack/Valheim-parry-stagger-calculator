@@ -97,7 +97,13 @@ tbody tr[aria-selected=true] td { background: color-mix(in srgb, var(--accent) 1
 .explain { margin-top: 10px; font-size: 13px; color: var(--muted); max-width: 80ch; }
 body[data-view=stagger] [data-v=parry], body:not([data-view=stagger]) [data-v=stagger] { display: none !important; }
 .viewsw { margin-bottom: 12px; }
-details.res summary { cursor: pointer; font-size: 13px; }
+details.res summary { cursor: pointer; font-size: 13px; list-style: none; position: relative; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 6px 26px 6px 8px; }
+details.res summary::-webkit-details-marker { display: none; }
+details.res summary::after { content: "▼"; position: absolute; right: 9px; top: 50%; transform: translateY(-50%); color: var(--muted); font-size: 11px; }
+details.res[open] summary::after { content: "▲"; }
+details.res summary:hover { border-color: var(--muted); }
+details.res #reslist { border: 1px solid var(--line); border-top: 0; border-radius: 0 0 6px 6px; padding: 2px 8px 8px; }
+details.res[open] summary { border-radius: 6px 6px 0 0; }
 details.res .grp { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; margin: 8px 0 2px; }
 details.res label { display: flex; gap: 6px; align-items: baseline; font-size: 13px; padding: 1px 0; }
 details.res label small { color: var(--muted); }
