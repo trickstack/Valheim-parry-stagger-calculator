@@ -291,7 +291,7 @@ const maxHP = t => P.baseHP + chosenFoods().reduce((s, f) => s + f.hp * foodFrac
 const maxSt = t => P.baseStamina + chosenFoods().reduce((s, f) => s + f.st * foodFrac(t), 0);
 function blocker() { return blockers.find(b => b.label === S.blocker) || blockers[0]; }
 function blockPower() {
-  const b = blocker(), q = Math.min(S.quality, b.maxQ);
+  const b = blocker(), q = qOf(b, S.quality);
   const base = b.bp + Math.max(0, q - 1) * b.bpLvl;
   const bp = base + base * (S.skill / 100) * 0.5;
   const parry = S.mode === "parry" && b.parry > 1;
@@ -342,7 +342,7 @@ const weapon = () => weapons.find(w => w.label === S.wpn) || weapons[0];
 // random skill factor is uniform in [c-0.15, c+0.15] clamped to 0..1, c = lerp(0.4, 1, skill/100)
 function skillRange(skill) { const c = 0.4 + 0.6 * Math.max(0, Math.min(100, skill)) / 100; return [Math.max(0, c - 0.15), Math.min(1, c + 0.15)]; }
 function evalSwing(e, sw) {
-  const w = weapon(), q = Math.min(S.wq, w.maxQ);
+  const w = weapon(), q = qOf(w, S.wq);
   const n = 1 + S.extra, split = sw.split && n > 1 ? 1 / (n * 0.75) : 1;
   const scale = sw.mult * split * (S.pdmg / 100) / (1 + (S.players - 1) * 0.3);
   const D = STAGGER.reduce((s, k) => s + ((w.damage[k] || 0) + Math.max(0, q - 1) * (w.perLvl[k] || 0)) * MODMULT[e.mods[k] || 0], 0) * scale;
@@ -370,6 +370,9 @@ function swingNotes(sw) {
 }
 
 // ---- UI ----
+// the forge of potential upgrades past maxQ with no cap in code; damage/block keep scaling linearly per level
+const qOf = (it, q) => it.maxQ > 1 ? Math.max(1, q || 1) : 1;
+const qOpts = (it, q) => Array.from({ length: it.maxQ > 1 ? Math.max(it.maxQ + 6, q) : 1 }, (_, i) => [i + 1, i < it.maxQ ? String(i + 1) : i + 1 + " (forge)"]);
 function fillSelect(el, items, val) { el.innerHTML = items.map(([v, t]) => `<option value="${v}">${t}</option>`).join(""); el.value = val; }
 let fillFoods = () => {};
 // searchable dropdown: click opens the full grouped list, typing filters it, arrows + Enter or click picks.
@@ -440,11 +443,11 @@ function update() {
   document.body.dataset.view = S.view;
   [...$("view").children].forEach(x => x.setAttribute("aria-pressed", x.dataset.view === S.view));
   const w = weapon();
-  fillSelect($("wq"), Array.from({ length: w.maxQ }, (_, i) => [i + 1, String(i + 1)]), Math.min(S.wq, w.maxQ));
+  fillSelect($("wq"), qOpts(w, S.wq), qOf(w, S.wq));
   S.wskill = Math.max(0, Math.min(100, S.wskill || 0));
   $("wskilll").textContent = w.skillName + " skill";
   const b = blocker();
-  fillSelect($("quality"), Array.from({ length: b.maxQ }, (_, i) => [i + 1, String(i + 1)]), Math.min(S.quality, b.maxQ));
+  fillSelect($("quality"), qOpts(b, S.quality), qOf(b, S.quality));
   S.skill = Math.max(0, Math.min(100, S.skill || 0)); S.players = Math.max(1, Math.min(10, S.players || 1));
   if (S.cr < S.cg) S.cr = S.cg;
   $("cgv").textContent = S.cg + "%"; $("crv").textContent = S.cr + "%";
@@ -480,7 +483,7 @@ function update() {
 }
 
 function renderStagger(e) {
-  const w = weapon(), q = Math.min(S.wq, w.maxQ);
+  const w = weapon(), q = qOf(w, S.wq);
   const fmt = v => v.toFixed(0);
   const head = `<div class="dhead"><h3>${e.label}</h3><span class="note">${e.biome}${e.guess ? " (biome guessed)" : ""} · ${S.stars} star${S.stars === 1 ? "" : "s"} · ${e.health * (S.stars + 1)} hp · ${w.label} q${q}, ${w.skillName.toLowerCase()} skill ${S.wskill}</span></div>`;
   const res = STAGGER.filter(k => (w.damage[k] || 0) > 0).map(k => { const m = MODMULT[e.mods[k] || 0]; return m === 1 ? "" : `${m < 1 ? "resists" : "weak to"} ${k} (×${m})`; }).filter(Boolean).join(", ");
