@@ -500,12 +500,12 @@ function renderDetail() {
   if (S.view === "stagger") return renderStagger(e);
   S.row = Math.min(S.row || 0, e.rows.length - 1);
   const rows = e.rows.map((r, i) => { const n = need(r), c = r.unblock ? "d" : cls(n), v1 = evalRow(r, 1);
-    return `<tr data-i="${i}" aria-selected="${i === S.row}" class="${c}"><td>${r.name}</td><td class="num">${sum(v1.raw, TYPES).toFixed(0)}</td>
+    return `<tr data-i="${i}" aria-selected="${i === S.row}" class="${c}"><td>${r.name}<div class="note">${TYPES.filter(k => v1.raw[k] >= 0.5).map(k => v1.raw[k].toFixed(0) + " " + k).join(" · ")}</div></td><td class="num">${sum(v1.raw, TYPES).toFixed(0)}</td>
       <td class="num">${v1.stag == null ? "–" : v1.stag.toFixed(1)}</td><td class="num">${v1.limit.toFixed(1)}</td>
       <td class="num">${v1.fullHit.toFixed(0)}${v1.dot ? ` <span class="note">+${v1.dot.toFixed(0)} dot</span>` : ""}</td><td class="verdict">${verdict(r, n)}</td></tr>`; }).join("");
   $("detail").innerHTML = `<div class="dhead"><h3>${e.label}</h3><span class="note">${e.biome}${e.guess ? " (biome guessed)" : ""} · ${S.stars} star${S.stars === 1 ? "" : "s"} · ${S.diff}% enemy damage${S.players > 1 ? " · " + S.players + " players" : ""}</span></div>
     <div class="tablewrap"><table><thead><tr><th>Attack</th><th class="num">Hit</th><th class="num">Gets past shield</th><th class="num">Guard limit</th><th class="num">Full hit on you</th><th>Verdict</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="note" style="margin-top:6px">Columns at fresh food. "Gets past shield" is the stagger damage left after your block; the guard breaks when it reaches the guard limit (40% of max health). "Full hit on you" is what lands after armor if the guard breaks. Pick an attack to see its curve.</div>
+    <div class="note" style="margin-top:6px">Columns at fresh food. Under each attack: its damage by type (chop and pickaxe only hit trees and rocks, so they are left out). Player resistances lower "Full hit on you" but not what gets past your shield. "Gets past shield" is the stagger damage left after your block; the guard breaks when it reaches the guard limit (40% of max health). "Full hit on you" is what lands after armor if the guard breaks. Pick an attack to see its curve.</div>
     <div class="chart" id="chart"></div><div class="readout num" id="readout"></div><div class="explain" id="explain"></div>`;
   $("detail").querySelector("tbody").onclick = ev => { const tr = ev.target.closest("tr"); if (!tr) return; S.row = +tr.dataset.i; save(); renderDetail(); };
   drawChart(e.rows[S.row]);
